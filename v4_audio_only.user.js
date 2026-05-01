@@ -45,7 +45,8 @@
                 guardNoProgressMs: 7000,
                 guardResumeCooldownMs: 1500,
             },
-            _audioEl: null,
+            _audioEls: [],
+            _audioIndex: 0,
             _treeContainerEl: null,
             _isPlaying: false,
             _nextSectionPending: false,
@@ -68,6 +69,15 @@
 
             _runContentPageAudio() {
                 this._logPhase("内容页-启动", "V4 音频独立播放版");
+                
+                // 预检任务是否已完成
+                if (this._detectTaskCompleted()) {
+                    this._logPhase("内容页-启动", "✅ 任务已完成，跳转下一节");
+                    this._navigateToNextSection();
+                    return;
+                }
+                this._logPhase("内容页-启动", "⏳ 任务未完成，开始初始化");
+                
                 const iframeCount = document.querySelectorAll('iframe').length;
                 console.log(`%c  页面 iframe 数量: ${iframeCount}`, "color:#607D8B");
 
