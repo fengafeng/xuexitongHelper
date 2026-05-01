@@ -24,3 +24,6 @@ build/
 # Project specific - downloaded temp files
 xx_files/*.下载
 xx_files/*.下载!gitkeep
+
+# WorkBuddy working memory (development only)
+.workbuddy/

@@ -42,60 +42,60 @@
 
 ## 版本与文件索引
 
-### V5 — 音视频混合版（最新）
+> 📌 当前推荐使用 **V5 音视频混合版**（最新），其他版本保留作为开发参考。
+
+### V5 — 音视频混合版（⭐ 推荐）
 
 | 文件 | 大小 | 用途 |
 |------|------|------|
-| `v5_audio_video.user.js` | ~60KB | Tampermonkey 安装版（`@match *://*.chaoxing.com/*`） |
-| `v5_audio_video.js` | ~42KB | 可引用 JS 文件版 |
-| `v5_audio_video_console.js` | ~35KB | F12 控制台粘贴执行版 |
+| `v5_audio_video.user.js` | ~70KB | Tampermonkey 安装版（`@match *://*.chaoxing.com/*`） |
+| `v5_audio_video.js` | ~46KB | 可引用 JS 文件版 |
+| `v5_audio_video_console.js` | ~43KB | F12 控制台粘贴执行版 |
 
 **关键特性**：
-- 自动检测音频/视频媒体类型（5 层策略，含 `#iframe` 内容检测）
-- 音频 → 沿用 V4 完整逻辑
-- 视频 → 基于 V3 视频逻辑 + `#iframe` 内查找
-- 整课循环模式（面板切换）
-- 视频停滞 7 秒自动恢复
-- 视频回退 3 次重试（每次 2 秒）
+- 自动检测音频/视频媒体类型（5 层策略 + 延迟重试）
+- 音频播放 → 沿用 V4 完整逻辑
+- 视频播放 → 三层 iframe 穿透 + 3 次重试 + 停滞恢复
+- 整课循环模式 + 正常播放模式（面板切换）
+- 章节测验自动跳过 | 用户手动切换章节自动重初始化
+- 详细的启动诊断日志
 
 ### V4 — 音频专用版
 
 | 文件 | 大小 | 用途 |
 |------|------|------|
-| `v4_audio_only.user.js` | ~20KB | Tampermonkey 安装版 |
-| `v4_audio_only.js` | ~20KB | 引用版 |
-| `v4_audio_only_console.js` | ~12KB | 控制台版 |
+| `v4_audio_only.user.js` | ~35KB | Tampermonkey 安装版 |
+| `v4_audio_only.js` | ~35KB | 引用版 |
+| `v4_audio_only_console.js` | ~27KB | 控制台版 |
 
-**关键特性**：
-- 纯音频播放，无视频/自动化流程
-- `@match` 仅匹配 `knowledge/cards` 和 `studentstudy`
-- 多音频支持（同一卡片多个音频片段）
+**关键特性**：纯音频播放、悬浮速度面板、多音频支持
 
-### V3 — 视频优化版
+### V3 — 音频增强版（V5 开发基础）
 
 | 文件 | 大小 | 用途 |
 |------|------|------|
-| `v3_optimized.user.js` | ~15KB | Tampermonkey 安装版 |
-| `v3_optimized.js` | ~15KB | 控制台/引用版 |
-| `v3_audio_optimized.user.js` | ~25KB | 音频增强版（含自动化） |
-| `v3_audio_optimized.js` | ~25KB | 音频增强版 |
+| `v3_audio_optimized.user.js` | ~103KB | Tampermonkey 安装版（含全自动化流程） |
+| `v3_audio_optimized.js` | ~103KB | 引用版 |
 
-### V2 — 原始版
+V3 音频版在 V5 中被拆分为音频和视频两条独立路径，V5 的音频逻辑继承自此版。
+> `v3_optimized.js` / `v3_optimized.user.js` 已移除，功能已完全被 V5 覆盖。
 
-| 文件 | 用途 |
-|------|------|
-| `v2.js` | 最早期版本，视频播放 + 自动翻页 |
-| `xuexitong.js` | 更早期的实验版本 |
-
-### 其他文件
+### 历史版本
 
 | 文件 | 用途 |
 |------|------|
-| `kcnrsp.html` | 学习通学生学习页面 HTML 源码（视频页面结构参考） |
-| `kcnr.html` | 学习通内容页面 HTML 源码 |
-| `kclist.html` | 课程列表页面 HTML 源码 |
-| `kczj.html` | 课程章节页面 HTML 源码 |
+| `v2.js` | 原始版：视频播放 + 自动翻页 |
+| `xuexitong.js` | 最早期实验版本 |
+
+### 辅助文件
+
+| 文件 | 用途 |
+|------|------|
+| `kcnrsp.html` | 视频学习页面 HTML 源码（V5 视频结构参考） |
+| `kcnr.html` / `kcnrsp.html` / `kclist.html` / `kczj.html` | 页面结构调试参考 |
+| `img/` | 截图（用于历史 README 文档） |
 | `TEST_GUIDE.md` | 测试指南 |
+| `.workbuddy/` | 工作记忆与技能文件（仅开发环境） |
 
 ---
 
