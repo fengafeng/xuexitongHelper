@@ -8,7 +8,6 @@
 // @run-at       document-idle
 // @grant        none
 // ==/UserScript==
-(function () {
 /*
  * 学习通自动学习脚本 - xuexitongScript
  * Copyright (c) 2026 suifeng
