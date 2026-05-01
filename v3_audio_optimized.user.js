@@ -1,3 +1,24 @@
+// ==UserScript==
+// @name         学习通自动刷音频脚本 V3（全自动版）
+// @namespace    local.codex.xuexitong.audio
+// @version      3.3.0
+// @description  自动检测课程进度→进入课程→检测章节→自动播放→自动下一节（全自动流程）
+// @author       suifeng
+// @match        *://*.chaoxing.com/*
+// @run-at       document-idle
+// @grant        none
+// ==/UserScript==
+(function () {
+/*
+ * 学习通自动学习脚本 - xuexitongScript
+ * Copyright (c) 2026 suifeng
+ * 
+ * 作者: suifeng
+ * 项目地址: https://github.com/fengafeng/xuexitongScript
+ * 
+ * 本脚本仅供学习交流使用，禁止商业用途。
+ * 使用请遵守相关平台规定，使用者需自行承担使用风险。
+ */
 (function () {
     if (typeof window.jQuery === 'undefined') {
         const script = document.createElement('script');
@@ -14,6 +35,15 @@
 
     function initializePlayer() {
         window.app = {
+            // ======== 阶段日志辅助 ========
+            _logPhase(phaseName, detail = '') {
+                const prefix = `【${phaseName}】`;
+                const msg = detail ? `${prefix} ${detail}` : prefix;
+                console.log(`%c${msg}`, "color:#FF9800;font-weight:bold;font-size:13px");
+                if (detail) {
+                    console.log(`%c  └─ 详情:`, "color:#9E9E9E", detail);
+                }
+            },
             configs: {
                 playbackRate: 1.0, // 1倍速播放（可通过悬浮窗调节）
                 autoplay: true,
@@ -41,8 +71,337 @@
                 return this._cellData;
             },
             run() {
-                console.log("%c=== 学习通自动刷音频脚本 V3 音频版启动 ===", "color:#4CAF50;font-size:16px;font-weight:bold");
-                console.log("%c等待页面完全加载并检测任务状态...", "color:#FF9800");
+                this._logPhase("run-启动", "学习通自动刷音频脚本 V3（调试增强版 + 全自动版）");
+                console.log(`%c  页面URL: ${window.location.href}`, "color:#607D8B");
+                console.log(`%c  页面标题: "${document.title}"`, "color:#607D8B");
+                console.log(`%c  document.readyState: ${document.readyState}`, "color:#607D8B");
+                
+                // 检测页面类型
+                const pageType = this._detectPageType();
+                this._logPhase("run-页面类型", `检测结果: ${pageType}`);
+                
+                switch (pageType) {
+                    case 'course_list':
+                        this._runCourseListAuto();
+                        break;
+                    case 'chapter_list':
+                        this._runChapterListAuto();
+                        break;
+                    case 'study_page':
+                        this._runStudyPageAuto();
+                        break;
+                    case 'content_page':
+                        this._runContentPageAudio();
+                        break;
+                    default:
+                        console.log("%c未知页面类型，尝试执行音频播放逻辑...", "color:#FF9800");
+                        this._runContentPageAudio();
+                }
+            },
+
+            /**
+             * 自动识别当前页面类型
+             */
+            _detectPageType() {
+                const url = window.location.href;
+                
+                // 课程列表页面
+                if (url.includes('i.chaoxing.com/base') || 
+                    url.includes('/studyApp/studying') ||
+                    url.includes('/studyApp/studied') ||
+                    url.includes('/studyApp/getXskc')) {
+                    return 'course_list';
+                }
+                
+                // 章节列表页面（studentcourse）
+                if (url.includes('/mycourse/studentcourse')) {
+                    return 'chapter_list';
+                }
+                
+                // 学习页面（studentstudy - 有 #coursetree + #iframe）
+                if (url.includes('/mycourse/studentstudy')) {
+                    return 'study_page';
+                }
+                
+                // 知识卡片内容页面（knowledge/cards - 当前脚本的运行页面）
+                if (url.includes('/knowledge/cards')) {
+                    return 'content_page';
+                }
+                
+                return 'unknown';
+            },
+
+            /**
+             * 课程列表页面自动化
+             * 检测课程进度，点击未完成的课程
+             */
+            _runCourseListAuto() {
+                this._logPhase("课程列表-开始", "检测课程进度...");
+                console.log("%c提示: 课程数据可能在 iframe 内，等待 DOM 加载...", "color:#FF9800");
+                
+                setTimeout(() => {
+                    this._detectAndEnterCourse();
+                }, 3000);
+            },
+            
+            _detectAndEnterCourse() {
+                this._logPhase("课程列表-检测", "查找未完成课程...");
+                
+                // 检测所有 iframe
+                const iframes = document.querySelectorAll('iframe');
+                for (let i = 0; i < iframes.length; i++) {
+                    try {
+                        const idoc = iframes[i].contentDocument || iframes[i].contentWindow?.document;
+                        if (!idoc) continue;
+                        
+                        // 在 iframe 中查找进度元素
+                        const progressEls = idoc.querySelectorAll('[class*="progress"], [class*="rate"], [class*="percent"], [class*="进度"], [class*="deg"]');
+                        if (progressEls.length === 0) continue;
+                        
+                        this._logPhase("课程列表-检测", `在 iframe[${i}] 中找到 ${progressEls.length} 个进度元素`);
+                        
+                        for (const pEl of progressEls) {
+                            const text = pEl.textContent.trim();
+                            const num = parseFloat(text);
+                            console.log(`%c  ├─ 进度: "${text}" → ${isNaN(num) ? '无法解析' : num}`, "color:#607D8B");
+                            
+                            if (!isNaN(num) && num < 100) {
+                                this._logPhase("课程列表-检测", `✅ 找到未完成课程 (进度: ${num}%)`);
+                                
+                                // 从进度元素向上回溯，找包含"进入学习"的容器
+                                let card = pEl.closest('li, [class*="card"], [class*="item"], .w_main > div, .course-item, tr');
+                                if (!card) card = pEl.parentElement;
+                                while (card && card.children.length < 3) {
+                                    card = card.parentElement;
+                                }
+                                
+                                // 多种方式找"进入学习"按钮
+                                let enterBtn = null;
+                                
+                                // 方式1: a标签 href 包含 studentcourse
+                                enterBtn = card.querySelector('a[href*="studentcourse"]');
+                                
+                                // 方式2: 文本包含"进入学习"的链接
+                                if (!enterBtn) {
+                                    const allLinks = card.querySelectorAll('a, button, span, div');
+                                    for (const link of allLinks) {
+                                        if (link.textContent.trim().includes('进入学习') || 
+                                            link.textContent.trim().includes('继续学习') ||
+                                            link.textContent.trim().includes('开始学习')) {
+                                            enterBtn = link;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                // 方式3: 类名包含 enter / study / 学习
+                                if (!enterBtn) {
+                                    enterBtn = card.querySelector('[class*="enter"], [class*="study"], [class*="学习"], [class*="btn"], [class*="button"]');
+                                }
+                                
+                                // 方式4: 直接在 iframe 中搜索所有链接
+                                if (!enterBtn) {
+                                    const allAnchors = idoc.querySelectorAll('a');
+                                    for (const a of allAnchors) {
+                                        if (a.href && (a.href.includes('studentcourse') || a.href.includes('studentstudy'))) {
+                                            enterBtn = a;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                if (enterBtn) {
+                                    this._logPhase("课程列表-检测", `✅ 找到"进入学习"按钮，点击: ${enterBtn.textContent.trim()}`);
+                                    enterBtn.click();
+                                    return;
+                                } else {
+                                    this._logPhase("课程列表-检测", `⚠️ 找到未完成课程但找不到进入按钮，尝试直接导航`);
+                                    // 输出卡片HTML帮助调试
+                                    console.log(`%c  └─ 卡片 HTML 前300字符: ${card.innerHTML.substring(0,300)}`, "color:#FF9800");
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.log(`%c  ├─ iframe[${i}] 访问出错: ${e.message}`, "color:#FF9800");
+                        continue;
+                    }
+                }
+                
+                // 直接在当前页面查找课程进入链接
+                const courseLinks = document.querySelectorAll('a[href*="studentcourse"]');
+                if (courseLinks.length > 0) {
+                    this._logPhase("课程列表-检测", `✅ 在当前页面找到 ${courseLinks.length} 个课程链接，点击第一个`);
+                    courseLinks[0].click();
+                } else {
+                    this._logPhase("课程列表-检测", "❌ 未找到任何可点击的课程入口");
+                }
+            },
+
+            /**
+             * 章节列表页面自动化（studentcourse）
+             * 检测章节完成状态，点击未完成小节
+             * 页面结构: .main > .left > .content1 > .timeline > .units > .leveltwo > h3 > a
+             * 完成: <em class="openlock"></em>  未完成: <em class="orange">N</em>
+             */
+            _runChapterListAuto() {
+                this._logPhase("章节列表-开始", "检测章节完成状态...");
+                
+                const checkChapters = () => {
+                    this._logPhase("章节列表-检测", "查找 .timeline .leveltwo ...");
+                    
+                    // 直接在 document 中查找章节节点（studentcourse 页面不使用 #coursetree）
+                    let levelTwoNodes = document.querySelectorAll('.timeline .leveltwo, .content1 .leveltwo, .main .leveltwo');
+                    
+                    // 如果还没找到，说明可能 AJAX 还没加载完，等一会儿
+                    if (!levelTwoNodes || levelTwoNodes.length === 0) {
+                        // 也尝试在 iframe 中查找（课程列表的 iframe 可能包含章节树）
+                        const iframes = document.querySelectorAll('iframe');
+                        for (let i = 0; i < iframes.length; i++) {
+                            try {
+                                const idoc = iframes[i].contentDocument || iframes[i].contentWindow?.document;
+                                if (!idoc) continue;
+                                levelTwoNodes = idoc.querySelectorAll('.timeline .leveltwo, .leveltwo');
+                                if (levelTwoNodes.length > 0) {
+                                    this._logPhase("章节列表-检测", `✅ 在 iframe[${i}] 中找到章节节点`);
+                                    break;
+                                }
+                            } catch(e) { continue; }
+                        }
+                    }
+                    
+                    if (!levelTwoNodes || levelTwoNodes.length === 0) {
+                        // 还尝试找任意含 openlock 或 orange 的节点
+                        const fallbackNodes = document.querySelectorAll('.openlock, .orange');
+                        if (fallbackNodes.length > 0) {
+                            this._logPhase("章节列表-检测", `通过 .openlock/.orange 找到 ${fallbackNodes.length} 个状态标记，尝试解析`);
+                            // 从这些标记反推父级 leveltwo 或 h3
+                            for (const marker of fallbackNodes) {
+                                const parentA = marker.closest('a');
+                                const parentH3 = marker.closest('h3');
+                                const parentLevel = marker.closest('.leveltwo');
+                                const clickTarget = parentA || parentH3?.querySelector('a');
+                                if (clickTarget && marker.classList.contains('orange')) {
+                                    const count = marker.textContent.trim();
+                                    this._logPhase("章节列表-检测", `▶️ 未完成任务点 (剩余 ${count})，点击: "${clickTarget.getAttribute('aria-label') || clickTarget.textContent.trim().substring(0,40)}"`);
+                                    clickTarget.click();
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        this._logPhase("章节列表-检测", "⏳ 章节树尚未加载，3秒后重试...");
+                        setTimeout(checkChapters, 3000);
+                        return;
+                    }
+                    
+                    this._logPhase("章节列表-检测", `✅ 找到 ${levelTwoNodes.length} 个章节节点，逐一检测状态`);
+                    
+                    for (const node of levelTwoNodes) {
+                        // 检测任务完成状态
+                        const orange = node.querySelector('.orange');
+                        const openlock = node.querySelector('.openlock');
+                        const jobCount = node.querySelector('.knowledgeJobCount');
+                        
+                        if (orange) {
+                            const count = orange.textContent.trim();
+                            const link = node.querySelector('h3 a, a[href*="studentstudy"]');
+                            const title = link ? (link.getAttribute('aria-label') || link.textContent.trim()) : '未知';
+                            this._logPhase("章节列表-检测", `▶️ 未完成任务点: "${title}" (剩余 ${count} 个)`);
+                            
+                            if (link) {
+                                this._logPhase("章节列表-检测", `✅ 点击链接进入: "${title}"`);
+                                link.click();
+                                return;
+                            }
+                        } else if (openlock) {
+                            const link = node.querySelector('h3 a, a[href*="studentstudy"]');
+                            const title = link ? (link.getAttribute('aria-label') || link.textContent.trim().substring(0, 50)) : '未知';
+                            console.log(`%c  ├─ ✅ 已完成: ${title}`, "color:#4CAF50");
+                        } else if (jobCount) {
+                            const count = jobCount.value;
+                            if (count !== '0') {
+                                const link = node.querySelector('h3 a, a[href*="studentstudy"]');
+                                if (link) {
+                                    this._logPhase("章节列表-检测", `⏳ 有 ${count} 个任务点，进入: "${link.getAttribute('aria-label')}"`);
+                                    link.click();
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 所有已完成
+                    this._logPhase("章节列表-检测", "✅ 所有章节已完成！");
+                };
+                
+                // 等待 DOM 加载
+                setTimeout(checkChapters, 2000);
+            },
+
+            /**
+             * 学习页面自动化（studentstudy）
+             * 有 #coursetree（左）和 #iframe（右），需要等待 iframe 加载内容
+             */
+            _runStudyPageAuto() {
+                this._logPhase("学习页面-开始", "检测 #coursetree 和 #iframe...");
+                
+                // 等待 #iframe 加载完成，然后在其内容中执行音频播放
+                const checkIframe = () => {
+                    const iframe = document.getElementById('iframe');
+                    if (!iframe) {
+                        this._logPhase("学习页面-检测", "⏳ 未找到 #iframe，等待...");
+                        setTimeout(checkIframe, 2000);
+                        return;
+                    }
+                    
+                    this._logPhase("学习页面-检测", "✅ 找到 #iframe，等待内容加载...");
+                    
+                    // 监听 iframe load 事件
+                    iframe.addEventListener('load', () => {
+                        this._logPhase("学习页面-检测", "✅ #iframe 已加载，触发音频播放");
+                        this._runContentPageAudio();
+                    });
+                    
+                    // 如果已经加载完成
+                    try {
+                        const idoc = iframe.contentDocument || iframe.contentWindow?.document;
+                        if (idoc && idoc.readyState === 'complete') {
+                            this._logPhase("学习页面-检测", "✅ #iframe 内容已就绪");
+                            this._runContentPageAudio();
+                        }
+                    } catch(e) {
+                        this._logPhase("学习页面-检测", `⚠️ iframe 访问受限: ${e.message}`);
+                    }
+                };
+                
+                setTimeout(checkIframe, 1000);
+            },
+            /**
+             * 内容页面音频播放（原有逻辑）
+             */
+            _runContentPageAudio() {
+                this._logPhase("内容页-启动", "启动音频播放逻辑...");
+                
+                // 检测核心元素 #coursetree 是否存在（提前诊断）
+                const coursetreeExists = document.getElementById('coursetree');
+                console.log(`%c  $('#coursetree') 是否存在: ${coursetreeExists ? '✅ 存在' : '❌ 不存在'}`, coursetreeExists ? "color:#4CAF50" : "color:#F44336");
+                if (!coursetreeExists) {
+                    // 尝试在父页面找
+                    try {
+                        if (window.parent && window.parent.document.getElementById('coursetree')) {
+                            console.log(`%c  └─ 但父页面中存在 #coursetree`, "color:#4CAF50");
+                        }
+                    } catch(e) {}
+                    console.log(`%c  └─ 将使用卡片级导航`, "color:#FF9800");
+                    const allIds = Array.from(document.querySelectorAll('[id]')).map(el => el.id).slice(0, 30);
+                    console.log(`%c  └─ 页面现有 id 列表(前30):`, "color:#9E9E9E", allIds);
+                }
+                
+                // 检测 iframe 数量
+                const iframeCount = document.querySelectorAll('iframe').length;
+                console.log(`%c  页面 iframe 数量: ${iframeCount}`, "color:#607D8B");
+
+                this._logPhase("内容页-任务检测", "检查任务是否已完成...");
                 
                 // 添加DOM变化监听器来实时检测任务完成
                 const taskCompletionObserver = new MutationObserver((mutations) => {
@@ -51,7 +410,6 @@
                             const addedNodes = mutation.addedNodes;
                             for (let node of addedNodes) {
                                 if (node.nodeType === Node.ELEMENT_NODE) {
-                                    // 检查新添加的节点及其子节点
                                     const completedElements = node.querySelectorAll('[aria-label="任务点已完成"]');
                                     if (completedElements.length > 0) {
                                         console.log("%c✓ DOM监听器: 检测到任务完成图标被添加", "color:#4CAF50;font-weight:bold");
@@ -61,7 +419,6 @@
                                 }
                             }
                         } else if (mutation.type === 'attributes' && mutation.attributeName === 'aria-label') {
-                            // 检查属性变化
                             const target = mutation.target;
                             if (target.getAttribute('aria-label') === '任务点已完成') {
                                 console.log("%c✓ 属性监听器: 检测到aria-label变为任务完成", "color:#4CAF50;font-weight:bold");
@@ -72,7 +429,6 @@
                     }
                 });
                 
-                // 开始监听整个文档的变化
                 taskCompletionObserver.observe(document.body, { 
                     childList: true, 
                     subtree: true, 
@@ -80,52 +436,57 @@
                     attributeFilter: ['aria-label'] 
                 });
                 
-                // 加强的任务完成检测函数
                 const checkTaskCompletion = () => {
                     return this._detectTaskCompleted();
                 };
 
-                // 页面加载完成后立即检测
                 const detectOnLoad = () => {
                     if (checkTaskCompletion()) {
                         this._navigateToNextSection();
-                        return true;  // 任务已完成，停止播放初始化
+                        return true;
                     }
                     return false;
                 };
                 
-                // 立即检测一次
-                if (detectOnLoad()) {
+                const loadDetected = detectOnLoad();
+                this._logPhase("内容页-立即检测", loadDetected ? "✅ 任务已完成，跳过播放" : "⏳ 任务未完成，继续初始化");
+                if (loadDetected) {
                     return;
                 }
                 
-                // 如果立即检测失败，等待DOM完全加载后再次检测
                 if (document.readyState === 'loading') {
+                    this._logPhase("内容页-加载等待", "document 仍在 loading，挂载 DOMContentLoaded 事件");
                     document.addEventListener('DOMContentLoaded', () => {
+                        this._logPhase("内容页-DOMContentLoaded", "触发！");
                         setTimeout(() => {
                             if (detectOnLoad()) {
+                                this._logPhase("内容页-DOMContentLoaded检测", "✅ 任务已完成");
                                 return;
                             }
-                            // 继续初始化播放
+                            this._logPhase("内容页-DOMContentLoaded检测", "⏳ 未完成，开始初始化");
                             this._startTaskCompletionMonitor();
                             this._startAudioInitialization();
                         }, 1000);
                     });
                 } else {
-                    // DOM已加载，延迟检测
+                    this._logPhase("内容页-dom就绪", `DOM 已就绪 (readyState=${document.readyState})，延迟1秒后初始化`);
                     setTimeout(() => {
                         if (detectOnLoad()) {
+                            this._logPhase("内容页-延迟检测", "✅ 任务已完成");
                             return;
                         }
-                        // 继续初始化播放
+                        this._logPhase("内容页-延迟检测", "⏳ 未完成，开始初始化");
                         this._startTaskCompletionMonitor();
                         this._startAudioInitialization();
                     }, 1000);
                 }
             },
             _startAudioInitialization() {
+                this._logPhase("音频初始化-开始", "开始智能查找音频 iframe...");
+                
                 // 智能查找音频iframe - 支持多种选择器和嵌套查找
                 const findAudioIframe = () => {
+                    this._logPhase("音频初始化-findIframe", "第1阶段：尝试 CSS 选择器直接匹配");
                     // 第一阶段：尝试直接选择器查找
                     const selectors = [
                         "iframe.ans-insertaudio",           // 标准class
@@ -139,16 +500,17 @@
                     
                     for (const selector of selectors) {
                         const found = $(selector);
+                        console.log(`%c  ├─ 选择器 "${selector}": ${found.length > 0 ? `✅ 命中 ${found.length} 个` : '❌ 未命中'}`, found.length > 0 ? "color:#4CAF50" : "color:#9E9E9E");
                         if (found.length > 0) {
-                            console.log(`%c✓ 通过选择器 "${selector}" 找到 ${found.length} 个iframe`, "color:#4CAF50");
+                            this._logPhase("音频初始化-findIframe", `✅ 第1阶段通过选择器 "${selector}" 找到 ${found.length} 个iframe`);
                             return found.eq(0);
                         }
                     }
                     
                     // 第二阶段：遍历所有iframe
-                    console.log("%c尝试遍历所有iframe...", "color:#607D8B");
+                    this._logPhase("音频初始化-findIframe", "第2阶段：遍历页面所有 iframe");
                     const allIframes = $("iframe");
-                    console.log(`%c页面中共有 ${allIframes.length} 个iframe`, "color:#9C27B0");
+                    console.log(`%c  ├─ 页面中共有 ${allIframes.length} 个 iframe`, "color:#9C27B0");
                     
                     for (let i = 0; i < allIframes.length; i++) {
                         const iframe = allIframes.eq(i);
@@ -157,35 +519,42 @@
                         const id = iframe.attr('id') || '';
                         const name = iframe.attr('name') || '';
                         
-                        console.log(`%ciframe ${i}: src="${src}", class="${className}", id="${id}", name="${name}"`, "color:#9C27B0");
+                        const candidate = src.includes('audio') || className.includes('audio') || 
+                            id.includes('audio') || name.includes('audio') ||
+                            src.includes('insert') || className.includes('ans');
+                        const skip = src.includes('video') || className.includes('video') || 
+                            id.includes('video') || name.includes('video');
+                        
+                        const marker = skip ? '⏭️跳过' : candidate ? '🎯候选' : '   ';
+                        console.log(`%c  iframe[${i}] ${marker} src="${src.substring(0,80)}" class="${className}" id="${id}" name="${name}"`, 
+                            candidate ? "color:#4CAF50" : skip ? "color:#FF9800" : "color:#9C27B0");
                         
                         // 排除明显是视频的iframe
-                        if (src.includes('video') || className.includes('video') || 
-                            id.includes('video') || name.includes('video')) {
-                            console.log(`%c  → 跳过，识别为视频iframe`, "color:#FF9800");
+                        if (skip) {
                             continue;
                         }
                         
                         // 寻找音频相关的iframe
-                        if (src.includes('audio') || className.includes('audio') || 
-                            id.includes('audio') || name.includes('audio') ||
-                            src.includes('insert') || className.includes('ans')) {
-                            console.log(`%c  → 找到可能的音频iframe`, "color:#4CAF50");
+                        if (candidate) {
+                            this._logPhase("音频初始化-findIframe", `✅ 第2阶段在 iframe[${i}] 匹配到音频特征`);
                             return iframe;
                         }
                     }
                     
                     // 第三阶段：检查嵌套的iframe内容
-                    console.log("%c尝试检查嵌套的iframe内容...", "color:#607D8B");
+                    this._logPhase("音频初始化-findIframe", "第3阶段：检查嵌套 iframe 内容");
                     for (let i = 0; i < allIframes.length; i++) {
                         const parentIframe = allIframes.eq(i);
                         try {
                             const iframeDoc = parentIframe.contents();
-                            if (!iframeDoc || iframeDoc.length === 0) continue;
+                            if (!iframeDoc || iframeDoc.length === 0) {
+                                console.log(`%c  iframe[${i}]: 无法获取内容（跨域或未加载）`, "color:#FF9800");
+                                continue;
+                            }
                             
                             const nestedIframes = iframeDoc.find("iframe");
                             if (nestedIframes.length > 0) {
-                                console.log(`%c  iframe ${i} 内部有 ${nestedIframes.length} 个嵌套iframe`, "color:#607D8B");
+                                this._logPhase("音频初始化-嵌套", `iframe[${i}] 内部发现 ${nestedIframes.length} 个嵌套 iframe`);
                                 
                                 for (let j = 0; j < nestedIframes.length; j++) {
                                     const nestedIframe = $(nestedIframes[j]);
@@ -193,24 +562,30 @@
                                     const nestedClass = nestedIframe.attr('class') || '';
                                     const nestedId = nestedIframe.attr('id') || '';
                                     
-                                    console.log(`%c    嵌套iframe ${j}: src="${nestedSrc}", class="${nestedClass}", id="${nestedId}"`, "color:#9C27B0");
+                                    const isVideo = nestedSrc.includes('video') || nestedClass.includes('video');
+                                    console.log(`%c  └─ 嵌套[${i}][${j}]: src="${nestedSrc.substring(0,80)}" class="${nestedClass}" id="${nestedId}" ${isVideo ? '⏭️视频' : '检查中'}`, 
+                                        isVideo ? "color:#FF9800" : "color:#9C27B0");
                                     
                                     // 检查嵌套iframe是否是音频
-                                    if (!nestedSrc.includes('video') && !nestedClass.includes('video')) {
+                                    if (!isVideo) {
                                         if (nestedSrc.includes('audio') || nestedClass.includes('audio') || 
                                             nestedId.includes('audio') || nestedSrc.includes('insert')) {
-                                            console.log(`%c  ✓ 在iframe ${i}内找到音频iframe`, "color:#4CAF50");
+                                            this._logPhase("音频初始化-嵌套", `✅ 在iframe[${i}]内找到音频iframe[${j}]`);
                                             return nestedIframe;
                                         }
                                     }
                                 }
+                            } else {
+                                console.log(`%c  iframe[${i}]: 内容可访问，但无嵌套 iframe`, "color:#9E9E9E");
                             }
                         } catch (e) {
+                            console.log(`%c  iframe[${i}]: ❌ 访问内容出错: ${e.message}`, "color:#F44336");
                             // 跳过无法访问的iframe（跨域）
                             continue;
                         }
                     }
                     
+                    this._logPhase("音频初始化-findIframe", "❌ 所有阶段均未找到音频 iframe");
                     return null;  // 没找到
                 };
                 
@@ -224,36 +599,25 @@
                     }
                     
                     const iframe = frameObj[0];  // frameObj是jQuery对象或null
-                    console.log(`%c✓ 找到音频iframe，src: ${iframe.src}`, "color:#4CAF50");
+                    this._logPhase("音频初始化-waitFrame", `✅ 找到音频 iframe，src: ${(iframe.src || '').substring(0,80)}`);
                     console.log(`%c  class: ${iframe.className}, id: ${iframe.id}, name: ${iframe.name}`, "color:#607D8B");
                     
                     // 如果iframe已经加载完成，直接检查内容
                     if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
-                        console.log("%ciframe已完全加载，直接初始化", "color:#4CAF50");
+                        this._logPhase("音频初始化-waitFrame", "▶️ 分支A: iframe 已完全加载 (readyState=complete)，直接初始化");
                         setTimeout((() => {
-                            this._getTreeContainer();
-                            this._initCellData();
-                            this._audioEl = null;
-                            this._getAudioEl();
-                            this._clearCheckInterval();
-                            this._bindStepNavigation();
-                            this.play();
+                            this._phaseInitSequence("分支A-direct");
                         }).bind(this), 500);
                         return;
                     }
                     
                     // 监听iframe加载事件
+                    this._logPhase("音频初始化-waitFrame", "▶️ 分支B: iframe 尚未完成加载，挂载 load 事件 + 轮询");
                     const onIframeLoad = (() => {
-                        console.log("%ciframe加载事件触发", "color:#4CAF50");
+                        this._logPhase("音频初始化-onLoad", "✅ iframe load 事件触发！");
                         iframe.removeEventListener('load', onIframeLoad);
                         setTimeout((() => {
-                            this._getTreeContainer();
-                            this._initCellData();
-                            this._audioEl = null;
-                            this._getAudioEl();
-                            this._clearCheckInterval();
-                            this._bindStepNavigation();
-                            this.play();
+                            this._phaseInitSequence("分支B-onLoad");
                         }).bind(this), 1000); // 给内容加载一点额外时间
                     }).bind(this);
                     
@@ -264,7 +628,7 @@
                         try {
                             const iframeDoc = iframe.contentDocument;
                             if (!iframeDoc) {
-                                console.log("%c无法访问iframe内容 (可能跨域或未加载)，500ms后重试", "color:#FF9800");
+                                console.log(`%c  ├─ 轮询: 无法访问iframe内容 (可能跨域或未加载)`, "color:#FF9800");
                                 setTimeout(checkIframeContent, 500);
                                 return;
                             }
@@ -273,22 +637,16 @@
                             const docReady = iframeDoc.readyState === 'complete' || 
                                            iframeDoc.readyState === 'interactive';
                             if (!docReady) {
-                                console.log(`%ciframe文档状态: ${iframeDoc.readyState}，等待完成`, "color:#FF9800");
+                                console.log(`%c  ├─ 轮询: iframe文档状态=${iframeDoc.readyState}，等待完成`, "color:#FF9800");
                                 setTimeout(checkIframeContent, 500);
                                 return;
                             }
                             
-                            console.log("%c✓ iframe内容已完全加载，开始初始化", "color:#4CAF50");
+                            this._logPhase("音频初始化-轮询", `✅ iframe 文档状态=${iframeDoc.readyState}，开始初始化`);
                             iframe.removeEventListener('load', onIframeLoad); // 移除监听器
-                            this._getTreeContainer();
-                            this._initCellData();
-                            this._audioEl = null;
-                            this._getAudioEl();
-                            this._clearCheckInterval();
-                            this._bindStepNavigation();
-                            this.play();
+                            this._phaseInitSequence("分支C-poll");
                         } catch (e) {
-                            console.log(`%c检查iframe内容时出错: ${e.message}，500ms后重试`, "color:#F44336");
+                            console.log(`%c  ├─ 轮询: ❌ 出错 ${e.message}，500ms后重试`, "color:#F44336");
                             setTimeout(checkIframeContent, 500);
                         }
                     }).bind(this);
@@ -298,27 +656,91 @@
                 
                 setTimeout(waitForAudioFrame, 2000);
             },
+            /**
+             * 统一的初始化序列（带阶段日志和异常兜底）
+             */
+            _phaseInitSequence(source) {
+                this._logPhase("初始化序列", `来源: ${source}`);
+                const steps = [
+                    { name: '_getTreeContainer', fn: () => this._getTreeContainer() },
+                    { name: '_initCellData',      fn: () => this._initCellData() },
+                    { name: '重置_audioEl',       fn: () => { this._audioEl = null; } },
+                    { name: '_getAudioEl',         fn: () => this._getAudioEl() },
+                    { name: '_clearCheckInterval', fn: () => this._clearCheckInterval() },
+                    { name: '_bindStepNavigation', fn: () => this._bindStepNavigation() },
+                    { name: 'play',                fn: () => this.play() },
+                ];
+                for (const step of steps) {
+                    try {
+                        this._logPhase(`init-${step.name}`, `开始执行...`);
+                        const result = step.fn();
+                        if (result === null || result === false) {
+                            console.log(`%c  └─ 返回: null/false（正常）`, "color:#9E9E9E");
+                        } else if (result !== undefined) {
+                            console.log(`%c  └─ 返回:`, "color:#9E9E9E", result);
+                        }
+                    } catch (e) {
+                        console.log(`%c⚠️ init-${step.name} 抛出异常: ${e.message}`, "color:#F44336;font-weight:bold");
+                        console.log(`%c  └─ 继续执行下一步...`, "color:#FF9800");
+                    }
+                }
+                this._logPhase("初始化序列", "✅ 所有步骤执行完毕");
+            },
             nextUnit() {
-                console.log("%c=== 准备切换到下一小节 ===", "color:#2196F3;font-size:14px");
+                this._logPhase("导航-nextUnit", `当前: 第${this._cellData.currentCellIndex + 1}章 第${this._cellData.currentNCellIndex + 1}节`);
+                
+                // 尝试获取课程树
                 const el = this._getTreeContainer();
+                
+                // 如果没有课程树，使用卡片级导航
+                if (!el) {
+                    this._logPhase("导航-nextUnit", "ℹ️ 无课程树，尝试卡片级导航（#right1）");
+                    const nextBtn = document.getElementById('right1');
+                    if (nextBtn) {
+                        this._logPhase("导航-nextUnit", "✅ 找到 #right1，模拟点击下一节");
+                        nextBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                        this._audioEl = null;
+                        this._isPlaying = false;
+                        this._nextSectionPending = false;
+                        setTimeout(() => {
+                            try {
+                                this._initCellData();
+                                this.play();
+                            } catch (e) {
+                                this._logPhase("导航-nextUnit", `❌ 卡片导航重播失败: ${e.message}`);
+                            }
+                        }, 3000);
+                    } else {
+                        this._logPhase("导航-nextUnit", "❌ 无可用的导航方式（无 #coursetree、无 #right1）");
+                        console.log("%c=====================================", "color:#4CAF50;font-size:16px");
+                        console.log("%c==============当前小节播放完成==============", "color:#4CAF50;font-size:16px;font-weight:bold");
+                        console.log("%c==========请手动切换到下一章节=============", "color:#FF9800;font-size:16px;font-weight:bold");
+                        console.log("%c=====================================", "color:#4CAF50;font-size:16px");
+                    }
+                    this._clearCheckInterval();
+                    return;
+                }
+                
+                // 有课程树，用树结构导航
                 const cells = el.children("ul").children("li");
                 const nCells = $(cells.get(this._cellData.currentCellIndex)).find('.posCatalog_select:not(.firstLayer)');
+                
+                console.log(`%c  ├─ 当前章节共有 ${nCells.length} 个音频节点`, "color:#607D8B");
+                console.log(`%c  ├─ 当前节点索引: ${this._cellData.currentNCellIndex + 1}/${nCells.length}`, "color:#607D8B");
 
                 if (nCells.length > this._cellData.currentNCellIndex + 1) {
                     const nextNIndex = this._cellData.currentNCellIndex + 1;
-                    console.log(`%c切换到同章节下一个音频: ${nextNIndex + 1}/${nCells.length}`, "color:#FF9800");
+                    this._logPhase("导航-nextUnit", `▶️ 同章节下一个音频: ${nextNIndex + 1}/${nCells.length}`);
                     this.playCurrentIndex(nCells.get(nextNIndex));
                 } else {
                     const nextIndex = this._cellData.currentCellIndex + 1;
                     if (nextIndex >= cells.length) {
-                        console.log("%c=====================================", "color:#4CAF50;font-size:16px");
-                        console.log("%c当前章节已完成，尝试点击下一节按钮", "color:#FF9800;font-size:14px");
-                        console.log("%c=====================================", "color:#4CAF50;font-size:16px");
+                        this._logPhase("导航-nextUnit", "✅ 当前章节已完成，尝试点击下一节按钮");
                         
                         // 尝试点击下一节按钮
                         const nextBtn = document.getElementById('right1');
                         if (nextBtn) {
-                            console.log("%c找到下一节按钮，模拟点击跳转", "color:#4CAF50");
+                            this._logPhase("导航-nextUnit", `✅ 找到下一节按钮(#right1)，模拟点击`);
                             nextBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
                             this._audioEl = null;
                             this._isPlaying = false;
@@ -327,10 +749,11 @@
                                     this._initCellData();
                                     this.play();
                                 } catch (e) {
-                                    console.error("切换下一节失败:", e);
+                                    this._logPhase("导航-nextUnit", `❌ 切换下一节失败: ${e.message}`);
                                 }
                             }, 3000);
                         } else {
+                            this._logPhase("导航-nextUnit", "❌ 未找到 #right1 按钮（可能已完成所有课程）");
                             console.log("%c=====================================", "color:#4CAF50;font-size:16px");
                             console.log("%c==============本课程学习完成了==============", "color:#4CAF50;font-size:16px;font-weight:bold");
                             console.log("%c=====================================", "color:#4CAF50;font-size:16px");
@@ -339,7 +762,7 @@
                         this._clearCheckInterval();
                         return;
                     }
-                    console.log(`%c切换到下一个章节: ${nextIndex + 1}/${cells.length}`, "color:#FF9800");
+                    this._logPhase("导航-nextUnit", `▶️ 切换到下一章节: ${nextIndex + 1}/${cells.length}`);
                     this._cellData.currentCellIndex = nextIndex;
                     this._cellData.currentNCellIndex = 0;
                     this.playCurrentIndex();
@@ -425,9 +848,11 @@
             _guardLastWallTs: 0,
             _guardLastResumeTs: 0,
             async play() {
+                this._logPhase("play", `尝试播放 (重试 #${this._tryTimes}/${this.configs.maxRetries})`);
                 try {
                     const el = this._getAudioEl();
                     if (el == null) {
+                        this._logPhase("play", "_getAudioEl 返回 null，尝试切换学习步骤");
                         if (this._advanceLearningStep()) {
                             console.log("%c当前不在音频页，已尝试切到下一学习步骤，2秒后重试", "color:#607D8B");
                             setTimeout(() => {
@@ -443,7 +868,7 @@
                         return;
                     }
 
-                    console.log(`%c找到音频元素: ${el.tagName} id=${el.id}`, "color:#2196F3");
+                    this._logPhase("play", `✅ 找到音频元素: <${el.tagName}> id="${el.id}"`);
                     this._tryTimes = 0;
                     this._isPlaying = true;
                     this._audioEventHandle();
@@ -456,25 +881,26 @@
                     try {
                         console.log("%c尝试播放音频...", "color:#FF9800");
                         await el.play();
-                        console.log(`%c音频开始播放，倍速: ${el.playbackRate}x`, "color:#4CAF50");
+                        this._logPhase("play", `✅ 音频开始播放，倍速: ${el.playbackRate}x`);
                         this._startAudioMonitoring();
                     } catch (playError) {
-                        console.error("音频播放失败:", playError);
+                        this._logPhase("play", `❌ 直接播放失败: ${playError.message}`);
                         console.log("%c尝试静音播放...", "color:#FF9800");
                         // 尝试静音播放
                         el.muted = true;
                         try {
                             await el.play();
-                            console.log("%c静音播放成功", "color:#4CAF50");
+                            this._logPhase("play", "✅ 静音播放成功");
                             this._startAudioMonitoring();
                         } catch (mutedError) {
-                            console.error("静音播放也失败:", mutedError);
+                            this._logPhase("play", `❌ 静音播放也失败: ${mutedError.message}`);
                             this._handlePlayError(playError);
                         }
                     }
                 } catch (e) {
+                    this._logPhase("play", `❌ 播放尝试异常: ${e.message}`);
                     if (this._tryTimes > this.configs.maxRetries) {
-                        console.error("%c音频播放失败，已达到最大重试次数", "color:#F44336;font-weight:bold", e);
+                        this._logPhase("play", `❌ 已达到最大重试次数 (${this.configs.maxRetries})，停止`, "color:#F44336;font-weight:bold");
                         this._clearCheckInterval();
                         return;
                     }
@@ -487,13 +913,16 @@
             },
             _advanceLearningStep() {
                 if (this._stepSwitchPending && Date.now() - this._stepSwitchAt < 4000) {
+                    this._logPhase("_advanceLearningStep", "⏳ 冷却期内，跳过 (4秒内)");
                     return true;
                 }
 
                 const prevTitle = document.getElementsByClassName("prev_title")[0];
                 const currentStepTitle = prevTitle ? (prevTitle.title || prevTitle.textContent || "").trim() : "";
+                this._logPhase("_advanceLearningStep", `当前步骤标题: "${currentStepTitle}"`);
 
                 if (currentStepTitle === "章节测验" || currentStepTitle === "音频") {
+                    this._logPhase("_advanceLearningStep", `✅ 当前已是 "${currentStepTitle}" 页，无需切换`);
                     return false;
                 }
 
@@ -506,12 +935,17 @@
                     return true;
                 };
 
+                this._logPhase("_advanceLearningStep", "查找「音频」页签...");
                 const audioTab = $(".prev_white:visible").filter((_, el) => {
                     const text = ($(el).text() || "").replace(/\s+/g, "");
                     return text === "2音频" || text === "音频";
                 }).get(0);
-                if (clickElement(audioTab, "“音频”页签")) {
+                if (audioTab) {
+                    this._logPhase("_advanceLearningStep", "✅ 找到「音频」页签，点击");
+                    clickElement(audioTab, "“音频”页签");
                     return true;
+                } else {
+                    this._logPhase("_advanceLearningStep", "❌ 未找到「音频」页签");
                 }
 
                 return false;
@@ -551,17 +985,18 @@
 
                 const nextBtn = document.getElementById('right1');
                 if (!nextBtn) {
-                    console.log("%c找不到下一节按钮", "color:#F44336");
+                    this._logPhase("_navigateToNextSection", "❌ 找不到 #right1 下一节按钮");
                     return;
                 }
 
                 this._nextSectionPending = true;
-                console.log("%c模拟点击下一节按钮", "color:#FF9800");
+                this._logPhase("_navigateToNextSection", "模拟点击 #right1 下一节按钮");
                 nextBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
                 this._resetForNavigation();
                 this._waitForNextSectionReady();
             },
             _resetForNavigation() {
+                this._logPhase("_resetForNavigation", "重置: audioEl=null, treeContainerEl=null, isPlaying=false");
                 this._audioEl = null;
                 this._treeContainerEl = null;
                 this._isPlaying = false;
@@ -571,7 +1006,7 @@
             _waitForNextSectionReady(attempt = 0) {
                 if (attempt > 20) {
                     this._nextSectionPending = false;
-                    console.log("%c下一节加载超时，停止等待", "color:#F44336");
+                    this._logPhase("_waitForNextSectionReady", "❌ 超过20次重试，超时停止");
                     return;
                 }
 
@@ -579,7 +1014,7 @@
                     this._initCellData();
                     const audio = this._getAudioEl();
                     if (audio) {
-                        console.log("%c下一节已准备，开始播放", "color:#4CAF50");
+                        this._logPhase("_waitForNextSectionReady", `✅ 第${attempt + 1}次尝试: 下一节已准备，开始播放`);
                         audio.playbackRate = this.configs.playbackRate;
                         this._bindStepNavigation();
                         if (this.configs.autoplay) {
@@ -587,16 +1022,19 @@
                         }
                         this._nextSectionPending = false;
                         return;
+                    } else {
+                        console.log(`%c  ├─ 第${attempt + 1}次尝试: 下一节未就绪`, "color:#607D8B");
                     }
                 } catch (e) {
-                    console.log("%c等待下一节准备中，重试...", "color:#607D8B");
+                    console.log(`%c  ├─ 第${attempt + 1}次尝试: ${e.message}`, "color:#FF9800");
                 }
 
                 setTimeout(() => this._waitForNextSectionReady(attempt + 1), 2000);
             },
             _detectTaskCompleted() {
-                console.log("%c正在检测任务完成状态...", "color:#FF9800");
+                const methods = [];
                 
+                // 方法1: aria-label
                 let completedLabels = document.querySelectorAll('[aria-label="任务点已完成"]');
                 if (completedLabels.length === 0) {
                     const allIframes = document.querySelectorAll('iframe');
@@ -616,47 +1054,48 @@
                         }
                     }
                 }
+                methods.push({ name: "方法1: aria-label", result: completedLabels.length > 0, count: completedLabels.length });
 
-                console.log(`%c方法1: 找到 ${completedLabels.length} 个 [aria-label="任务点已完成"] 元素`, "color:#607D8B");
-                if (completedLabels.length > 0) {
-                    console.log("%c✓ 方法1: 检测到任务完成图标", "color:#4CAF50;font-weight:bold");
-                    return true;
-                }
-
+                // 方法2: 文本内容
+                let textFound = false;
                 const completedTextElements = document.querySelectorAll('*');
                 for (let el of completedTextElements) {
                     if (el.textContent && el.textContent.includes('任务点已完成')) {
-                        console.log("%c✓ 方法2: 检测到任务完成文本", "color:#4CAF50;font-weight:bold");
-                        return true;
+                        textFound = true;
+                        break;
                     }
                 }
+                methods.push({ name: "方法2: 文本内容", result: textFound });
 
+                // 方法3: CSS类
                 const completedElements = document.querySelectorAll('.ans-job-finished, .task-completed, [data-status="completed"]');
-                if (completedElements.length > 0) {
-                    console.log("%c✓ 方法3: 检测到任务完成状态类", "color:#4CAF50;font-weight:bold");
-                    return true;
-                }
+                methods.push({ name: "方法3: CSS类", result: completedElements.length > 0, count: completedElements.length });
 
+                // 方法4: 页面标题
                 const pageTitle = document.title || '';
-                if (pageTitle.includes('已完成') || pageTitle.includes('完成')) {
-                    console.log("%c✓ 方法4: 检测到页面标题包含完成状态", "color:#4CAF50;font-weight:bold");
-                    return true;
-                }
+                methods.push({ name: "方法4: 页面标题", result: pageTitle.includes('已完成') || pageTitle.includes('完成') });
 
+                // 方法5: URL
                 const currentUrl = window.location.href;
-                if (currentUrl.includes('completed') || currentUrl.includes('finish') || currentUrl.includes('done')) {
-                    console.log("%c✓ 方法5: 检测到URL包含完成状态", "color:#4CAF50;font-weight:bold");
-                    return true;
-                }
+                methods.push({ name: "方法5: URL", result: currentUrl.includes('completed') || currentUrl.includes('finish') || currentUrl.includes('done') });
 
+                // 方法6: 弹窗元素
                 const completionPopups = document.querySelectorAll('.completion-popup, .task-finished, .finished-modal, [class*="complete"]');
-                if (completionPopups.length > 0) {
-                    console.log("%c✓ 方法6: 检测到完成提示元素", "color:#4CAF50;font-weight:bold");
-                    return true;
-                }
+                methods.push({ name: "方法6: 弹窗元素", result: completionPopups.length > 0, count: completionPopups.length });
 
-                console.log("%c✗ 未检测到任务完成状态", "color:#F44336");
-                return false;
+                // 输出所有方法的结果
+                this._logPhase("_detectTaskCompleted", `检测任务完成状态 (${methods.length}种方法):`);
+                methods.forEach(m => {
+                    const icon = m.result ? '✅' : '❌';
+                    const extra = m.count !== undefined ? ` (数量: ${m.count})` : '';
+                    console.log(`%c  ${icon} ${m.name}${extra}`, m.result ? "color:#4CAF50" : "color:#9E9E9E");
+                });
+
+                const overall = methods.some(m => m.result);
+                if (overall) {
+                    this._logPhase("_detectTaskCompleted", "✅ 综合判定: 任务已完成");
+                }
+                return overall;
             },
             _startTaskCompletionMonitor() {
                 // 每120秒检查一次任务完成状态
@@ -697,78 +1136,196 @@
                 }
             },
             playCurrentIndex(nCell) {
+                this._logPhase("导航-playCurrentIndex", "进入");
                 if (!nCell) {
                     const el = this._getTreeContainer();
+                    if (!el) {
+                        this._logPhase("导航-playCurrentIndex", "❌ 无课程树，无法定位当前节点");
+                        this.nextUnit(); // 回到 nextUnit 走卡片导航兜底
+                        return;
+                    }
                     const cells = el.children("ul").children("li");
+                    if (!cells || cells.length === 0) {
+                        this._logPhase("导航-playCurrentIndex", "❌ 课程树无章节数据");
+                        this.nextUnit();
+                        return;
+                    }
                     const nCells = $(cells.get(this._cellData.currentCellIndex)).find('.posCatalog_select:not(.firstLayer)');
                     nCell = nCells.get(this._cellData.currentNCellIndex);
+                    this._logPhase("导航-playCurrentIndex", `自动定位: 章节[${this._cellData.currentCellIndex}] 节点[${this._cellData.currentNCellIndex}]`);
                 }
 
                 const $nCell = $(nCell);
                 const clickableSpan = $nCell.find(".posCatalog_name")[0];
                 if (!clickableSpan) {
-                    console.error("%c===========找不到可点击的课程节点，播放下一个音频失败==============", "color:#F44336");
+                    this._logPhase("导航-playCurrentIndex", "❌ 找不到可点击的 .posCatalog_name");
                     setTimeout(() => this.nextUnit(), 2000);
                     return;
                 }
 
-                console.log(`%c点击切换到: ${$(clickableSpan).attr('title') || '未知标题'}`, "color:#2196F3");
+                const title = $(clickableSpan).attr('title') || '未知标题';
+                this._logPhase("导航-playCurrentIndex", `▶️ 点击切换到: "${title}"`);
                 $(clickableSpan).click();
                 this._audioEl = null;
                 this._isPlaying = false;
 
-                console.log("%c等待音频加载...", "color:#FF9800");
+                console.log("%c等待音频加载（3秒）...", "color:#FF9800");
                 setTimeout(() => {
-                    this._initCellData();
+                    try {
+                        this._initCellData();
+                    } catch(e) {
+                        this._logPhase("导航-playCurrentIndex", `⚠️ 重新初始化 _initCellData 失败: ${e.message}`);
+                    }
                     if (this.configs.autoplay) {
                         this.play();
                     }
                 }, 3000);
             },
             _initCellData() {
+                this._logPhase("_initCellData", "解析课程目录树...");
                 const el = this._getTreeContainer();
-                const cells = el.children("ul").children("li");
-                this._cellData.cells = cells.length;
-                let nCellCounts = 0;
-                let foundCurrent = false;
-
-                cells.each((i, v) => {
-                    const nCells = $(v).find('.posCatalog_select:not(.firstLayer)');
-                    nCellCounts += nCells.length;
-                    nCells.each((j, e) => {
-                        const _el = $(e);
-                        if (_el.hasClass("posCatalog_active")) {
-                            this._cellData.currentCellIndex = i;
-                            this._cellData.currentNCellIndex = j;
-                            foundCurrent = true;
-                            const titleSpan = _el.find('.posCatalog_name')[0];
-                            if (titleSpan) {
-                                this._cellData.currentAudioTitle = $(titleSpan).attr('title');
+                if (!el) {
+                    this._logPhase("_initCellData", "⚠️ _getTreeContainer 返回 null，跳过初始化（将使用卡片级导航）");
+                    return;
+                }
+                
+                // 检测树结构类型：新式(.cells > .ncells) 还是旧式(ul > li > .posCatalog_select)
+                const newStyleCells = el.find('.cells > .ncells');
+                const oldStyleCells = el.find('.posCatalog_select:not(.firstLayer)');
+                const useNewStyle = newStyleCells.length > oldStyleCells.length;
+                
+                this._logPhase("_initCellData", `树结构检测: 新式节点 ${newStyleCells.length} 个, 旧式节点 ${oldStyleCells.length} 个 → 使用${useNewStyle ? '新式' : '旧式'}解析`);
+                
+                if (useNewStyle) {
+                    // 新式结构解析: .cells(章) > .ncells(节) > h4/h5(可点击)
+                    const chapters = el.find('.cells');
+                    this._cellData.cells = chapters.length;
+                    this._logPhase("_initCellData", `新式解析: ${chapters.length} 个章节`);
+                    
+                    let nCellCounts = 0;
+                    let foundCurrent = false;
+                    
+                    chapters.each((i, chapter) => {
+                        const $chapter = $(chapter);
+                        const chapterTitle = $chapter.find('.cells_top').text().trim() || `章节${i+1}`;
+                        const sections = $chapter.find('.ncells');
+                        nCellCounts += sections.length;
+                        
+                        // 找当前激活章节
+                        let hasCurrent = false;
+                        sections.each((j, section) => {
+                            const $section = $(section);
+                            const isCurrent = $section.find('h4.currents, h5.currents').length > 0;
+                            if (isCurrent && !hasCurrent) {
+                                this._cellData.currentCellIndex = i;
+                                this._cellData.currentNCellIndex = j;
+                                foundCurrent = true;
+                                hasCurrent = true;
+                                this._cellData.currentAudioTitle = $section.find('h4, h5').first().text().trim();
                             }
-                        }
+                        });
+                        
+                        console.log(`%c  ├─ 章节[${i}]: "${chapterTitle}" → 含 ${sections.length} 个音频节点`, "color:#607D8B");
                     });
-                });
+                    
+                    this._cellData.nCells = nCellCounts;
+                    this._logPhase("_initCellData", `新式统计: ${this._cellData.cells}章, ${this._cellData.nCells}节, 当前: 第${this._cellData.currentCellIndex + 1}章第${this._cellData.currentNCellIndex + 1}节`);
+                } else {
+                    // 旧式结构解析: ul > li > .posCatalog_select
+                    const cells = el.children("ul").children("li");
+                    this._cellData.cells = cells.length;
+                    this._logPhase("_initCellData", `旧式解析: ${cells.length} 个顶层章节`);
+                    
+                    let nCellCounts = 0;
+                    let foundCurrent = false;
 
-                this._cellData.nCells = nCellCounts;
+                    cells.each((i, v) => {
+                        const nCells = $(v).find('.posCatalog_select:not(.firstLayer)');
+                        nCellCounts += nCells.length;
+                        const chapterTitle = $(v).find('.posCatalog_name').first().attr('title') || `章节${i+1}`;
+                        console.log(`%c  ├─ 章节[${i}]: "${chapterTitle}" → 含 ${nCells.length} 个音频节点`, "color:#607D8B");
+                        
+                        nCells.each((j, e) => {
+                            const _el = $(e);
+                            if (_el.hasClass("posCatalog_active")) {
+                                this._cellData.currentCellIndex = i;
+                                this._cellData.currentNCellIndex = j;
+                                foundCurrent = true;
+                                const titleSpan = _el.find('.posCatalog_name')[0];
+                                if (titleSpan) {
+                                    this._cellData.currentAudioTitle = $(titleSpan).attr('title');
+                                }
+                                console.log(`%c  └─ ▶️ 当前激活: 章节[${i}] 音频[${j}]: "${this._cellData.currentAudioTitle}"`, "color:#2196F3;font-weight:bold");
+                            }
+                        });
+                    });
 
-                if (!foundCurrent && nCellCounts > 0) {
-                    console.warn("%c未找到当前激活的音频节点，可能需要手动选择", "color:#FF9800");
+                    this._cellData.nCells = nCellCounts;
+                    this._logPhase("_initCellData", `旧式统计: ${this._cellData.cells}章, ${this._cellData.nCells}节, 当前: 第${this._cellData.currentCellIndex + 1}章第${this._cellData.currentNCellIndex + 1}节`);
                 }
 
-                console.log(`%c课程信息: ${this._cellData.cells}章, ${this._cellData.nCells}节, 当前: 第${this._cellData.currentCellIndex + 1}章第${this._cellData.currentNCellIndex + 1}节`, "color:#607D8B");
+                if (!foundCurrent && this._cellData.nCells > 0) {
+                    console.warn(`%c  ⚠️ 未找到当前激活的音频节点，共 ${this._cellData.nCells} 个节点`, "color:#FF9800;font-weight:bold");
+                }
             },
             _getTreeContainer() {
                 if (!this._treeContainerEl) {
-                    const el = $('#coursetree');
-                    if (el.length <= 0) {
-                        throw new Error("找不到音频列表");
+                    // 策略1: 在当前页面查找
+                    this._logPhase("_getTreeContainer", "策略1: 查找当前页面的 $('#coursetree')...");
+                    let el = $('#coursetree');
+                    if (el.length > 0) {
+                        this._treeContainerEl = el;
+                        this._logPhase("_getTreeContainer", `✅ 策略1 成功: 本地 #coursetree，子元素: ${el.children().length} 个`);
+                        return this._treeContainerEl;
                     }
-                    this._treeContainerEl = el;
+                    
+                    // 策略2: 尝试在父页面查找
+                    try {
+                        if (window.parent && window.parent.document !== window.document) {
+                            this._logPhase("_getTreeContainer", "策略2: 尝试在 parent.document 查找...");
+                            const parentDoc = window.parent.document;
+                            const parentEl = parentDoc.getElementById('coursetree');
+                            if (parentEl) {
+                                this._treeContainerEl = $(parentEl);
+                                this._logPhase("_getTreeContainer", "✅ 策略2 成功: 在父页面找到 #coursetree");
+                                return this._treeContainerEl;
+                            }
+                        }
+                    } catch (e) {
+                        console.log(`%c  ├─ 策略2 访问 parent.document 失败: ${e.message}`, "color:#FF9800");
+                    }
+                    
+                    // 策略3: 尝试在 top.document 查找
+                    try {
+                        if (window.top && window.top.document !== window.document) {
+                            this._logPhase("_getTreeContainer", "策略3: 尝试在 top.document 查找...");
+                            const topDoc = window.top.document;
+                            const topEl = topDoc.getElementById('coursetree');
+                            if (topEl) {
+                                this._treeContainerEl = $(topEl);
+                                this._logPhase("_getTreeContainer", "✅ 策略3 成功: 在 top.document 找到 #coursetree");
+                                return this._treeContainerEl;
+                            }
+                        }
+                    } catch (e) {
+                        console.log(`%c  ├─ 策略3 访问 top.document 失败: ${e.message}`, "color:#FF9800");
+                    }
+                    
+                    // 所有策略都失败
+                    console.log(`%c  ❌ 所有查找 #coursetree 的策略均失败！`, "color:#F44336;font-weight:bold");
+                    // 诊断输出
+                    if (typeof document !== 'undefined' && document.querySelectorAll) {
+                        const allIds = Array.from(document.querySelectorAll('[id]')).map(e => e.id);
+                        console.log(`%c  ├─ 当前页面所有 id 元素:`, "color:#FF9800", allIds);
+                    }
+                    this._logPhase("_getTreeContainer", "返回 null（页面上可能没有课程树，将使用卡片级导航兜底）");
+                    return null;
                 }
                 return this._treeContainerEl;
             },
             _getAudioEl() {
                 if (!this._audioEl) {
+                    this._logPhase("_getAudioEl", "开始查找音频元素...");
                     try {
                         // 复用智能查找逻辑 - 先定义findAudioIframe函数
                         const findAudioIframe = () => {
@@ -789,8 +1346,6 @@
                                     return found.eq(0);
                                 }
                             }
-                            
-                            // 第二和三阶段：遍历并检查嵌套
                             const allIframes = $("iframe");
                             for (let i = 0; i < allIframes.length; i++) {
                                 const iframe = allIframes.eq(i);
@@ -841,79 +1396,66 @@
 
                         // 使用智能查找获取iframe
                         const frameObj = findAudioIframe();
-                        console.log(`%c在_getAudioEl中查找iframe: ${frameObj ? '找到' : '未找到'}`, frameObj ? "color:#4CAF50" : "color:#FF9800");
                         
                         if (!frameObj || frameObj.length === 0) {
-                            console.log("%c未找到音频iframe", "color:#FF9800");
+                            this._logPhase("_getAudioEl", "❌ findAudioIframe 返回 null，未找到音频 iframe");
                             return null;
                         }
+                        this._logPhase("_getAudioEl", `✅ findAudioIframe 找到 iframe`);
 
                         const iframe = frameObj[0] || frameObj;
-                        console.log(`%ciframe src: ${iframe.src}`, "color:#9C27B0");
+                        console.log(`%c  └─ iframe.src: ${(iframe.src || '').substring(0,100)}`, "color:#9C27B0");
 
                         // 等待iframe内容加载
                         let iframeDoc;
                         try {
                             iframeDoc = frameObj.contents ? frameObj.contents() : $(iframe).contents();
+                            this._logPhase("_getAudioEl-iframeDoc", `iframe 文档可访问，子元素数: ${iframeDoc.length || 0}`);
                         } catch (e) {
-                            console.log(`%c无法访问iframe内容 (跨域限制): ${e.message}`, "color:#F44336");
+                            this._logPhase("_getAudioEl-iframeDoc", `❌ 无法访问 iframe 内容 (跨域限制): ${e.message}`);
                             return null;
                         }
 
                         if (!iframeDoc || iframeDoc.length === 0) {
-                            console.log("%ciframe内容还未加载", "color:#FF9800");
+                            this._logPhase("_getAudioEl-iframeDoc", "❌ iframe 内容未加载（空文档）");
                             return null;
                         }
 
-                        // 尝试多种方式查找音频元素
-                        console.log("%c开始查找音频元素...", "color:#2196F3");
-
                         // 策略1: 直接查找audio标签
+                        this._logPhase("_getAudioEl-策略1", "查找 <audio> 标签");
                         let audioEl = iframeDoc.find("audio").get(0);
-                        if (audioEl) {
-                            console.log("%c策略1成功: 找到audio标签", "color:#4CAF50");
-                        }
+                        console.log(`%c  └─ ${audioEl ? '✅ 找到' : '❌ 未找到'}`, audioEl ? "color:#4CAF50" : "color:#F44336");
 
                         // 策略2: 查找VideoJS播放器容器
                         if (!audioEl) {
+                            this._logPhase("_getAudioEl-策略2", "查找 .video-js / .audio-player 容器");
                             const videoJsContainer = iframeDoc.find(".video-js, #audio.video-js, .audio-player");
-                            console.log(`%c策略2: 找到 ${videoJsContainer.length} 个VideoJS容器`, "color:#607D8B");
+                            console.log(`%c  └─ 找到 ${videoJsContainer.length} 个 VideoJS 容器`, "color:#607D8B");
                             if (videoJsContainer.length > 0) {
                                 audioEl = videoJsContainer.find("audio").get(0);
-                                if (audioEl) {
-                                    console.log("%c策略2成功: 在VideoJS容器中找到audio元素", "color:#4CAF50");
-                                }
+                                console.log(`%c  └─ ${audioEl ? '✅ 容器内找到 <audio>' : '❌ 容器内无 <audio>'}`, audioEl ? "color:#4CAF50" : "color:#F44336");
                             }
                         }
 
                         // 策略3: 通过VideoJS API查找
                         if (!audioEl) {
+                            this._logPhase("_getAudioEl-策略3", "尝试 VideoJS API");
                             try {
                                 const iframeWindow = (frameObj[0] || iframe).contentWindow;
                                 if (iframeWindow) {
-                                    console.log("%c策略3: 尝试通过VideoJS API查找", "color:#607D8B");
+                                    const hasVideojs = !!(iframeWindow.videojs);
+                                    console.log(`%c  └─ iframeWindow.videojs 存在: ${hasVideojs}`, "color:#607D8B");
 
-                                    const possibleIds = ['audio', 'video', 'player'];
-                                    for (const id of possibleIds) {
-                                        if (iframeWindow.videojs && iframeWindow.videojs.players[id]) {
+                                    if (hasVideojs && iframeWindow.videojs.players) {
+                                        const playerKeys = Object.keys(iframeWindow.videojs.players);
+                                        console.log(`%c  └─ VideoJS players: ${playerKeys.length > 0 ? playerKeys.join(', ') : '无'}`, "color:#607D8B");
+                                        
+                                        for (const id of playerKeys) {
                                             const player = iframeWindow.videojs.players[id];
                                             if (player && player.el_) {
                                                 audioEl = player.el_.querySelector('audio');
                                                 if (audioEl) {
-                                                    console.log(`%c策略3成功: 通过VideoJS API找到音频元素 (ID: ${id})`, "color:#4CAF50");
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    if (!audioEl && iframeWindow.videojs && iframeWindow.videojs.players) {
-                                        const players = Object.values(iframeWindow.videojs.players);
-                                        for (const player of players) {
-                                            if (player && player.el_) {
-                                                audioEl = player.el_.querySelector('audio');
-                                                if (audioEl) {
-                                                    console.log("%c策略3成功: 通过VideoJS players枚举找到音频元素", "color:#4CAF50");
+                                                    this._logPhase("_getAudioEl-策略3", `✅ 通过 VideoJS player["${id}"] 找到 <audio>`);
                                                     break;
                                                 }
                                             }
@@ -921,33 +1463,34 @@
                                     }
                                 }
                             } catch (e) {
-                                console.log(`%c策略3失败: VideoJS API查找出错: ${e.message}`, "color:#F44336");
+                                console.log(`%c  └─ ❌ VideoJS API 访问失败: ${e.message}`, "color:#F44336");
                             }
                         }
 
                         // 策略4: 查找所有媒体元素
                         if (!audioEl) {
+                            this._logPhase("_getAudioEl-策略4", "查找所有 <audio> / <video>");
                             const allMedia = iframeDoc.find("audio, video");
-                            console.log(`%c策略4: 找到 ${allMedia.length} 个媒体元素`, "color:#607D8B");
+                            console.log(`%c  └─ 找到 ${allMedia.length} 个媒体元素`, "color:#607D8B");
                             if (allMedia.length > 0) {
                                 audioEl = allMedia.get(0);
-                                console.log("%c策略4成功: 找到媒体元素", "color:#4CAF50");
+                                console.log(`%c  └─ 取第一个: <${audioEl.tagName}> id="${audioEl.id}"`, "color:#4CAF50");
                             }
                         }
 
-                        console.log(`%c最终结果: ${audioEl ? '成功找到音频元素' : '未找到音频元素'}`, audioEl ? "color:#4CAF50" : "color:#F44336");
                         if (audioEl) {
-                            console.log(`%c音频元素类型: ${audioEl.tagName}, ID: ${audioEl.id}, 类名: ${audioEl.className}`, "color:#9C27B0");
+                            this._logPhase("_getAudioEl-结果", `✅ 成功! <${audioEl.tagName}> id="${audioEl.id}" className="${audioEl.className}"`);
                             this._audioEl = audioEl;
+                        } else {
+                            this._logPhase("_getAudioEl-结果", "❌ 所有策略均未找到音频元素");
                         }
                     } catch (e) {
-                        console.error("获取音频元素失败:", e);
+                        this._logPhase("_getAudioEl-异常", `❌ 获取音频元素时出错: ${e.message}`);
                         return null;
                     }
                 }
                 if (!this._audioEl) {
-                    console.log("%c音频元素未加载完成", "color:#FF9800");
-                    return null;
+                    console.log(`%c  └─ _audioEl 仍为 null（iframe 可能未加载完）`, "color:#FF9800");
                 }
                 return this._audioEl;
             },
@@ -1259,10 +1802,19 @@
         };
 
         try {
+            console.log("%c═══════════════════════════════════════", "color:#4CAF50;font-size:14px");
+            console.log("%c  window.app 初始化完成，开始执行 run()", "color:#4CAF50;font-size:14px;font-weight:bold");
+            console.log("%c═══════════════════════════════════════", "color:#4CAF50;font-size:14px");
             window.app.run();
 
-            // 创建悬浮速度控制面板
-            window.app._createSpeedControlPanel();
+            // 创建悬浮速度控制面板（仅内容页/学习页面需要）
+            const pageType = window.app && window.app._detectPageType ? window.app._detectPageType() : 'unknown';
+            if (pageType === 'content_page' || pageType === 'study_page' || pageType === 'unknown') {
+                console.log("%c[面板] 准备创建悬浮速度控制面板...", "color:#FF9800");
+                window.app._createSpeedControlPanel();
+            } else {
+                console.log("%c[面板] 当前页面类型 " + pageType + "，不创建速度控制面板", "color:#9E9E9E");
+            }
 
             const preventPause = (e) => {
                 e.stopPropagation();
@@ -1281,18 +1833,25 @@
             window.addEventListener("mouseout", preventPause);
 
             window.addEventListener("blur", (e) => {
-                console.log("%c页面失去焦点，保持播放状态", "color:#607D8B");
+                console.log("%c[防暂停] 页面失去焦点，保持播放状态", "color:#607D8B");
                 resumePlaybackNow();
             });
 
             document.addEventListener("visibilitychange", () => {
                 if (document.hidden) {
-                    console.log("%c页面切到后台，尝试保持播放状态", "color:#607D8B");
+                    console.log("%c[防暂停] 页面切到后台，尝试保持播放状态", "color:#607D8B");
                 }
                 resumePlaybackNow();
             });
+
+            console.log("%c═══════════════════════════════════════", "color:#4CAF50;font-size:14px");
+            console.log("%c  ✅ 所有事件监听器已注册", "color:#4CAF50;font-size:13px;font-weight:bold");
+            console.log("%c  ✅ 脚本启动流程完成，等待执行...", "color:#4CAF50;font-size:13px");
+            console.log("%c═══════════════════════════════════════", "color:#4CAF50;font-size:14px");
         } catch (error) {
-            console.error("%c脚本运行失败: ", "color:#F44336;font-weight:bold", error.message);
+            console.error("%c═══════ 脚本启动失败 ═══════", "color:#F44336;font-size:16px;font-weight:bold");
+            console.error(`%c  错误: ${error.message}`, "color:#F44336");
+            console.error(`%c  堆栈: ${error.stack}`, "color:#FF5722");
             console.log("请检查是否在正确的课程播放页面，或者页面结构是否再次发生改变。");
         }
     }

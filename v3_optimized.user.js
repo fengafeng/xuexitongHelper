@@ -3,7 +3,7 @@
 // @namespace    local.codex.xuexitong
 // @version      3.2.0
 // @description  按原版框架自动播放、自动下一节、章节测验自动跳过
-// @author       Codex
+// @author       suifeng
 // @match        *://mooc1.chaoxing.com/mycourse/studentstudy*
 // @match        *://*.chaoxing.com/mycourse/studentstudy*
 // @match        *://*.chaoxing.com/mooc2-ans/mycourse/studentstudy*

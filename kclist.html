@@ -1,0 +1,2452 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>个人空间</title>
+    <meta name="referrer" content="origin">
+    <link rel="stylesheet" href="/static/space/newSpace/css/layui.css?t=" type="text/css">
+    <link rel="stylesheet" href="/static/space/nervous/css/global.css?t=">
+    <link rel="stylesheet" href="/static/space/nervous/css/appicons-no-hover.css?t=">
+    <link rel="stylesheet" href="/static/space/nervous/css/iconStyle.css?t=">
+    <link rel="stylesheet" href="/static/space/nervous/iconfont/iconfont.css">
+        <link rel="stylesheet" href="/static/space/nervous/css/common.css?t=">
+    <link rel="stylesheet" href="/static/space/nervous/css/menuList.css?t=">
+    <link rel="stylesheet" href="/static/space/nervous/css/jquery.mCustomScrollbar.css?t=">
+    <link rel="stylesheet" href="/static/space/nervous/css/index.css?t=">
+    <link rel="stylesheet" href="/static/space/nervous/css/company-popup.css?t=">
+
+    <script type="text/javascript" src="/static/space/js/jquery-3.6.0.min.js?t="></script>
+    <script type="text/javascript" src="/static/space/js/cookie.js?t="></script>
+    <script type="text/javascript" src="/static/space/staticfile/layui/layui.js?t="></script>
+    <!-- 控制收件箱红点显示样式 -->
+    <style>
+        .box-new-message {
+            position: relative !important;
+        }
+        .box-new-message.disable::after {
+            display: none;
+        }
+        .box-new-message::after {
+            display: block;
+            position: absolute;
+            right: 160px;
+            top: 17px;
+            width: 8px;
+            height: 8px;
+            content: " ";
+            background: #ff0000;
+            border-radius: 50%;
+        }
+
+        .button-like {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+
+        .button-border-right::after {
+            content: "";
+            width: 1px;
+            height: 16px;
+            background: #ffffff;
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .button-inner {
+            padding: 8px 10px 5px 2px;
+            border-radius: 25px;
+            color: #FFFFFF;
+            text-align: center;
+        }
+
+        .button-inner img {
+            width: 16px;
+            overflow: hidden;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        .icon-shugang {
+            border-radius: 50%;
+            margin-top: 29px;
+            height: 19px;
+            width: 16px;
+            overflow: hidden;
+            vertical-align: middle;
+            margin-left: 4px;
+            margin-right: 3px;
+        }
+
+        #sitePopup .hover-cla {
+            background-color: #fcf5eb;
+        }
+        #sitePopup ul {
+            overflow: hidden;
+            overflow-y: auto;
+        }
+        ::-webkit-scrollbar {
+            /*滚动条整体样式*/
+            width: 4px;
+            /*高宽分别对应横竖滚动条的尺寸*/
+            /* height: 6px; */
+        }
+        ::-webkit-scrollbar-thumb {
+            /*滚动条里面小方块*/
+            border-radius: 6px;
+            -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+            background: #d1d0d0;
+        }
+        ::-webkit-scrollbar-track {
+            /*滚动条里面轨道*/
+            -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .popup .window .company:after {
+            content: none;
+        }
+        .header #item_search.space-weight .search-input {
+            border: 1px solid #F1F3F6;
+            background: #F1F3F6;
+            font-family: "PingFang SC";
+        }
+        .header #item_search.space-weight .search-input input {
+            color: #4e5969;
+        }
+        .header #item_search.space-weight .search-input input::placeholder {
+            color: #86909C;
+        }
+        .header #item_search.space-weight .search-input span {
+            background: url("/static/space/newSpace/images/icon-search.png") no-repeat center;
+            background-size: 18px;
+        }
+        .iconfont{
+            margin:0 12px 0 18px;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+	<!-- 左侧划过 背景色或者颜色样式 -->
+        <style>
+            .menu-list ul li .label-item:hover,
+            .con .con-left .menu  a:hover{
+                background: #2439A9;
+            }
+        </style>
+	<!-- 左侧选中 背景色或者颜色样式 -->
+        <style>
+            .menu-list ul li .label-item.cur,
+            .menu-list ul li .label-item.cur:hover,
+            .con .con-left .menu  a.active{
+                background: #5965C9;
+            }
+        </style>
+	<!-- 左侧选中 字体颜色样式 -->
+        <style>
+            .menu-list ul li .label-item.cur  h3, .con .con-left .menu a,
+            .con .con-left .menu  a.active{
+                color: #ffffff;
+            }
+        </style>
+<!-- 左侧默认 字体颜色样式 -->
+    <style>
+        .menu-list ul li .label-item h3,
+        .con .con-left .menu  a{
+            color: #ffffff;
+        }
+    </style>
+	
+	
+    <!-- 空间默认头部/设置头部引入-->
+	<!-- 左侧选中 背景色或者颜色样式 -->
+		 <style>
+			.header .space-con .nav li.user .user-popup{
+                background: url("http://p.ananas.chaoxing.com/star3/origin/8dbc96051e7bc028511bb1a5c48bf7d8") no-repeat center right;
+                background-size: cover;
+            }
+		</style>
+        <div class="header"
+                style="background:url(/static/space/nervous/images/top-bg.png) no-repeat center;background-size:cover;color:#ffffff"
+ >
+            <div class="space-unit">
+    				<h3 tabindex="0" id="siteName" title="北京联合大学继续教育学院（成人教育）"  openUrl="" >
+						北京联合大学继续教育学院（成人教育）
+    				</h3>
+            </div>
+            <div class="space-con">
+                <div class="head-nav" style="display:none;" id="headNav">
+                    <div class="head-nav-list">
+                        <ul>
+
+                        </ul>
+                    </div>
+                    <div class="head-nav-more">
+                        <div class="head-more"></div>
+                        <div class="head-more-list">
+                            <ul>
+
+                            </ul>
+                        </div>
+                    </div>
+                  </div>
+				<div class="space-search" id="item_search">
+					<div class="space-search-con">
+						<div class="space-type-wrap">
+							<div class="type-input"></div>
+							<ul class="type-list">
+									<li search-id="31013" type="0" url="${search.url}" >超星发现</li>
+							</ul>
+						</div>
+						<div class="space-search-wrap">
+							<div class="search-input">
+								<input id="sw" type="text" placeholder="搜索">
+								<script type="text/javascript">
+									_jsonpSuggest = function(e) {
+										var result = [];
+										if (unescape(e.q) == jQuery("#sw").val()) {
+											jQuery(unescape(e.values).split("|")).each(function() {
+												result.push(this);
+											})
+										}
+										window.sugresult = result.join("\r\n");
+									};
+									try {
+										("#sw").ready(function() {//获取提示词接口
+											("#sw").suggest('https://relt.duxiu.com/swjson.jsp?jsoncallback=_jsonpSuggest', {
+												onSubmit: function(e) {
+													indexsearch(e);
+												},
+												isdomin: '1'
+											});
+										});
+									} catch (e) {}
+								</script>
+								<span class="icon-search"></span>
+							</div>
+						</div>
+						<div class="search-result ac_results" id="search">
+
+						</div>
+					</div>
+				</div>
+                <ul class="nav fr" style="position:relative">
+					<!-- 切换单位显示效果 -->
+					<li tabindex="-1" class="appCode"
+									style="color: #ffffff;display: block;"  
+						>输入邀请码</li>
+                    <li class="user">
+						<img class="icon-head" src="https://photo.chaoxing.com/p/128849149_80?temp=1777618817601">
+						<h3 aria-label="账号：徐王峰" tabindex="0">徐王峰</h3>
+                        <span class="icon-down02  icon-h-arrow-l"></span>
+                        <div class="user-popup">
+                            <ul>
+									<!--科研图书馆定制 http://pm.chaoxing.com/issues/327668 复旦大学附属中学定制 http://pm.chaoxing.com/issues/338855 http://pm.chaoxing.com/issues/349469 http://pm.chaoxing.com/issues/350732-->
+										<li onclick="setUrl('account','/base/settings?t=');">账号管理</li>
+													<li onclick="siteListShow();">切换单位/角色</li>
+                				<li onclick="logout(7)">退出空间</li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+<script>
+	function logout(space){
+		var url = window.location.protocol+"//"+window.location.host;
+		var refer=document.URL;
+		var source = getCookie("source");
+		var backUrl='';
+		if(backUrl!=null && backUrl!=undefined && backUrl!='' && backUrl!='null' ){
+			url=backUrl
+		}else{
+    		if(refer.indexOf("i.chaoxing.com") != -1){
+    			url = window.location.protocol+"//i.chaoxing.com";
+    			if(source.indexOf("num")!=-1){
+					var flag= "v"+source.substring(3);
+					if(flag!=null && flag!=undefined && flag=='v100'){
+						flag="cv";
+					}
+    				url = window.location.protocol+"//"+flag+".chaoxing.com?fid="+getCookie("fid");
+    			}
+    		}
+		}
+		setCookie('source','',1,"chaoxing.com");
+        $.ajax({
+            url : "/base/logout",
+            success : function() { 
+            }
+        })
+		setCookie('source','',1,"chaoxing.com");
+        if(window.location.host == "ddxt.sysu.edu.cn") {
+        	window.location.href = "https://ddxt.sysu.edu.cn/passport/logout.html?refer="+encodeURIComponent(url) + "&space" + space;
+        }else {
+        	var logoutUrl = "https://passport2.chaoxing.com/logout.html?refer="+encodeURIComponent(url);
+			var model_logoutUrl = "";
+			var templateSetting_logoutUrl = "";
+			if (model_logoutUrl != null && model_logoutUrl != undefined && model_logoutUrl != '' && model_logoutUrl != 'null') {
+				logoutUrl = model_logoutUrl.indexOf("?") > -1 ? model_logoutUrl + "&refer=" + encodeURIComponent(url) : model_logoutUrl + "?refer=" + encodeURIComponent(url);
+			} else if (templateSetting_logoutUrl != null && templateSetting_logoutUrl != undefined && templateSetting_logoutUrl != '' && templateSetting_logoutUrl != 'null') {
+				try {
+					// 如果没有refer参数，追加refer
+					const templateLogoutURL = new URL(templateSetting_logoutUrl)
+					const searchParams=templateLogoutURL.searchParams
+					if (!searchParams.has('refer')) {
+						searchParams.append('refer',url)
+					}
+					logoutUrl= templateLogoutURL.href;
+				} catch (e) {
+					console.error(e);
+				}
+			}
+			logoutUrl += "&space=" + space;
+			window.location.href = logoutUrl;
+        }
+	}
+    $(document).ready(function() {
+        $(".user").mouseover(function(){
+            $(".user-popup").show();
+        });
+        $(".user").mouseout(function(){
+            $(".user-popup").hide();
+        });
+
+		if ($("#item_search .type-list li").length === 1) {
+			$("#item_search").addClass('space-one')
+		}
+
+		const searchId = localStorage.getItem('searchId')
+		if (searchId) {
+			const cacheSearchDom = $('#item_search .type-list li[search-id=' + searchId + ']');
+			if (cacheSearchDom.length === 0) {
+				$('#item_search .type-list li:first-child').click()
+			} else {
+				cacheSearchDom.click()
+			}
+		} else {
+			$('#item_search .type-list li:first-child').click()
+		}
+		var codeType = '0';
+		if (codeType == '' || codeType == 0) {
+			$(".button-like").addClass("button-border-right");
+		}
+    })
+
+
+	var searchShow = '0';
+	var search = '1';
+	var color = '0';
+	if (searchShow == 1 && search == 2) {
+		$("#item_search").addClass("space-right")
+	} else if (searchShow == 1 && search == 0) {
+		$("#item_search").addClass("space-left")
+	} else if(searchShow == 1 && search == 1){
+		$("#item_search").addClass("space-center")
+	}else {
+		$("#item_search").hide()
+	}
+
+	if (searchShow == 1 && color == 1) {
+		$("#item_search").addClass("space-weight")
+	} else if(searchShow == 1 && color == 0) {
+		$("#item_search").removeClass("space-weight")
+	}
+
+
+	function downloadPc(){
+		window.open("http://appmarket.chaoxing.com/static/custom/xxt/pc/download.html");
+	}
+	
+	function downloadZb(){
+		window.open("https://zhibo.chaoxing.com/download");
+	}
+
+	$(".header .space-unit img,h3").on("click", function (e) {
+		e.stopPropagation();
+		var openUrl = $(this).attr("openurl");
+		var topUrlType = "0";
+		if (topUrlType == "1") {
+			openUrl = '';
+		}
+		if (openUrl != null && openUrl != undefined && openUrl != '' && openUrl != 'null') {
+			window.parent.open(openUrl);
+		}
+	})
+
+
+	var cache = [];
+	var cacheSize = 0;
+
+	// 点击页面其他地方消失
+	$(document).click(function (e) {
+		var _con = $("#item_search");
+		if (!_con.is(e.target) && _con.has(e.target).length === 0) {
+			$("#item_search .search-result,.type-list").hide();
+			$(".type-input.type-slide").removeClass("type-slide")
+		}
+	});
+
+	$("#item_search input").on('focus', function () {
+		// 下拉框
+		$("#item_search .type-list").hide();
+		$(".type-input.type-slide").removeClass("type-slide")
+	}).on('blur', function () {
+		// 下拉框，搜索框
+		// 失去焦点
+		$("#item_search .search-result,.type-list").fadeOut(500,()=>{
+			$(".type-input.type-slide").removeClass("type-slide")
+		});
+	})
+	$("#item_search input").on('keyup', function (e) {
+		if(e.keyCode === 13) {
+			inputSearch()
+		}
+	})
+	// 头部检索
+	$("#item_search input").on('input propertychange', function () {
+		// 默认给建议
+		if ($('#item_search .type-list .active').attr('type') !== '0') {
+			$("#search").hide();
+			return
+		}
+		var q = $(this).val(); // 输入框内的值
+		if (q.length >= 1) {
+			cached = checkCache(q);
+			if (cached) {
+				displayItems(cached['items'], q);
+			} else {
+				/*$(this).parent().next().show();*/
+				window.sugresult = "";
+				$.getScript("https://relt.duxiu.com/swjson.jsp?jsoncallback=_jsonpSuggest" + "&sw=" + encodeURIComponent(q) + "&t=" + new Date().getTime(), function (data) {
+					var txt = window.sugresult;
+					$("#search").hide();
+					var items = parseTxt(txt, q);
+					displayItems(items, q);
+					addToCache(q, items, txt.length);
+				});
+			}
+		} else {
+			$("#search").hide();
+		}
+	});
+	function inputSearch() {
+		var val = $("#sw").val();
+		if (!val) {
+			return
+		}
+		let searchUrlDom = $('#item_search .type-list .active');
+		const url =searchUrlDom.attr('url')
+		const type =searchUrlDom.attr('type')
+		if(type==='0'){
+			// 跳转到发现
+			window.open("https://ss.zhizhen.com/s?sw=" + encodeURIComponent(val))
+		}else{
+			window.open(url + encodeURIComponent(val))
+		}
+	}
+	$("#item_search .icon-search").on('click', function () {
+		inputSearch()
+	});
+
+	function suggest() {
+		var q = $input.val();
+		// 只有默认才建议
+		if (q.length >= 1) {
+			cached = checkCache(q);
+			if (cached) {
+				displayItems(cached['items']);
+			} else {
+				window.sugresult = "";
+				$.getScript("https://relt.duxiu.com/swjson.jsp?jsoncallback=_jsonpSuggest" + "&sw=" + encodeURIComponent(q) + "&t=" + new Date().getTime(), function (data) {
+					var txt = window.sugresult;
+					$(".search-result").hide();
+					var items = parseTxt(txt, q);
+					displayItems(items);
+					addToCache(q, items, txt.length);
+				});
+			}
+		} else {
+			$(".search-result").hide();
+		}
+	}
+
+	// 检查缓存是否有
+	function checkCache(q) {
+
+		for (var i = 0; i < cache.length; i++)
+			if (cache[i]['q'] == q) {
+				cache.unshift(cache.splice(i, 1)[0]);
+				return cache[0];
+			}
+
+		return false;
+
+	}
+
+	// 将结果放到缓存
+	function addToCache(q, items, size) {
+
+		while (cache.length && (cacheSize + size > 65536)) {
+			var cached = cache.pop();
+			cacheSize -= cached['size'];
+		}
+
+		cache.push({
+			q: q,
+			size: size,
+			items: items
+		});
+
+		cacheSize += size;
+
+	}
+
+	function displayItems(items, q) {
+		if (!items)
+			return;
+		if (!items.length) {
+			$(".search-result").hide();
+			return;
+		}
+		var html = '';
+		for (var i = 0; i < items.length; i++) {
+			html += '<li>';
+			html += '<a href="https://ss.zhizhen.com/s?sw=' + q + '">';
+			html += '<h5>' + items[i] + '</h5>';
+			html += '</a>';
+			html += '</li>';
+		}
+
+
+		$(".search-result").html(html).show();
+		$(".search-result").children('li').mouseover(function () {
+			$(".search-result").children('li').removeClass("ac_over");
+			$(this).addClass("ac_over");
+		}).click(function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+			selectCurrentResult();
+		});
+	}
+
+	// 填充搜索下拉框
+	function parseTxt(txt, q) {
+		var items = [];
+		var tokens = txt.split("\n");
+		for (var i = 0; i < tokens.length; i++) {
+			var token = $.trim(tokens[i]);
+			if (token) {
+				token = token.replace(new RegExp(q, 'ig'), function (q) {
+					return '<span class="' + "ac_match" + '">' + q + '</span>'
+				});
+				items[items.length] = token;
+			}
+		}
+		return items;
+	}
+
+	function getCurrentResult() {
+		var $searchResult = $(".search-result");
+		if (!$searchResult.is(':visible')) return false; // 如果搜索结果框不可见，直接返回 false
+
+		var $currentResult = $searchResult.children('li.ac_over');
+		if ($currentResult.length === 0) return false; // 如果没有选中的结果，返回 false
+
+		return $currentResult; // 返回当前选中的结果
+	}
+
+	function selectCurrentResult() {
+		var $currentResult = getCurrentResult();
+		if ($currentResult) {
+			$("#sw").val($currentResult.text());
+			$(".search-result").hide()
+			inputSearch()
+		}
+	}
+	// 查询分类
+	$("#item_search .type-input").click(function () {
+		$(this).toggleClass('type-slide');
+		$(this).next().slideToggle('fast');
+	})
+	// 选择分类
+	$("#item_search .type-list li").click(function () {
+		var val = $(this).text();
+		$(this).addClass('active').siblings().removeClass('active');
+		$(".type-input").text(val).removeClass('type-slide');
+		$(".type-list").slideUp('fast');
+		localStorage.setItem('searchId',$(this).attr('search-id'))
+	})
+</script>
+
+    <div class="con">
+		
+		
+    <div  class="con-left con-left-float showIcon"  
+					style="background:#4D58B5;color:#ffffff; font-size:14px;" 
+>
+			<div class="user-block">
+				<img class="head-img" src="https://photo.chaoxing.com/p/128849149_80?temp=1777618817601">
+				<p class="user-name">徐王峰</p>
+					<div class="signature-wrap">
+							<div class="signature" id="signature"
+									style="color:#ffffff;"
+								></div>
+							<div class="signature-con" id="signatureCon"><img src="/static/space/nervous/images/icon-link.png"></div>
+					</div>
+			</div>
+        <div class="menu-list menu"
+			 	
+				style="height: calc(100% - 252px);"
+		>
+            <ul role="menubar" class="menu-list-ul">
+
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2186230"
+					>
+    					
+									
+									
+						
+    					<div role="menuitem" level="1"  focus_element="1"   tabindex="0"  name = "课程" id="first2186230" onclick="setUrl('2186230','https://buujxjy.jxjy.chaoxing.com/studyApp/studying?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','课程');" imgName="icon-home" dataurl="https://buujxjy.jxjy.chaoxing.com/studyApp/studying?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="active label-item cur" aria-label="课程菜单项已访问"
+							 >
+        								<span class="icon3 zne_kc_icon"></span>
+							<h3 title="课程">
+                						课程
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "7203997"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "考试列表" id="first7203997" onclick="setUrl('7203997','https://buujxjy.jxjy.chaoxing.com/ks/xs/examSysList?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','考试列表');" imgName="icon-home" dataurl="https://buujxjy.jxjy.chaoxing.com/ks/xs/examSysList?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon-space icon_kslb"></span>
+							<h3 title="考试列表">
+                						考试列表
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2186232"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "个人信息" id="first2186232" onclick="setUrl('2186232','https://buujxjy.jxjy.chaoxing.com/buaa/xs/xsxx/xsxxDetail?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','个人信息');" imgName="icon-home" dataurl="https://buujxjy.jxjy.chaoxing.com/buaa/xs/xsxx/xsxxDetail?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_grxx_icon"></span>
+							<h3 title="个人信息">
+                						个人信息
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2186233"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "选课管理" id="first2186233" onclick="setUrl('2186233','https://buujxjy.jxjy.chaoxing.com/xk/bxkmanage?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','选课管理');" imgName="icon-home" dataurl="https://buujxjy.jxjy.chaoxing.com/xk/bxkmanage?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_xkgl_icon"></span>
+							<h3 title="选课管理">
+                						选课管理
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2186234"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "考试服务" id="first2186234" onclick="setUrl('2186234','https://buujxjy.jxjy.chaoxing.com/kshk/xs/list?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','考试服务');" imgName="icon-home" dataurl="https://buujxjy.jxjy.chaoxing.com/kshk/xs/list?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_ksfw_icon"></span>
+							<h3 title="考试服务">
+                						考试服务
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2186235"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "学籍服务" id="first2186235" onclick="setUrl('2186235','https://buujxjy.jxjy.chaoxing.com/buaa/xs/xsxx/toXjDetail?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','学籍服务');" imgName="icon-home" dataurl="https://buujxjy.jxjy.chaoxing.com/buaa/xs/xsxx/toXjDetail?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_xjfw_icon"></span>
+							<h3 title="学籍服务">
+                						学籍服务
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2186236"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "在线缴费" id="first2186236" onclick="setUrl('2186236','https://buujxjy.jxjy.chaoxing.com/finance-v2/buaa/pay/xsjfdk?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','在线缴费');" imgName="icon-home" dataurl="https://buujxjy.jxjy.chaoxing.com/finance-v2/buaa/pay/xsjfdk?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_zxjf_icon"></span>
+							<h3 title="在线缴费">
+                						在线缴费
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2171993"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "专题创作" id="first2171993" onclick="setUrl('2171993','https://yz4.chaoxing.com/subject_creation/SubjectCreationController/subjectCreationIndex?version=3.0&s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','专题创作');" imgName="icon-home" dataurl="https://yz4.chaoxing.com/subject_creation/SubjectCreationController/subjectCreationIndex?version=3.0&s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_ztjs_icon"></span>
+							<h3 title="专题创作">
+                						专题创作
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2171992"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "收件箱" id="first2171992" onclick="setUrl('2171992','https://notice.chaoxing.com/pc/notice/myNotice?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','收件箱');" imgName="icon-home" dataurl="https://notice.chaoxing.com/pc/notice/myNotice?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_sjx_icon"></span>
+							<h3 title="收件箱">
+                						收件箱
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+							<span class="inform-txt" style="display: none;"><i>0</i></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2171991"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "小组" id="first2171991" onclick="setUrl('2171991','https://groupweb.chaoxing.com/pc/circle/circleIndex?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','小组');" imgName="icon-home" dataurl="https://groupweb.chaoxing.com/pc/circle/circleIndex?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_wdxz_icon"></span>
+							<h3 title="小组">
+                						小组
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2171997"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "笔记" id="first2171997" onclick="setUrl('2171997','https://groupyd2.chaoxing.com/pc/activity/activityList?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','笔记');" imgName="icon-home" dataurl="https://groupyd2.chaoxing.com/pc/activity/activityList?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_bj_icon"></span>
+							<h3 title="笔记">
+                						笔记
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2171994"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "通讯录" id="first2171994" onclick="setUrl('2171994','https://contactsyd.chaoxing.com/pc/contacts/home?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','通讯录');" imgName="icon-home" dataurl="https://contactsyd.chaoxing.com/pc/contacts/home?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_txl_icon"></span>
+							<h3 title="通讯录">
+                						通讯录
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2171989"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "云盘" id="first2171989" onclick="setUrl('2171989','https://pan-yz.cldisk.com/pcuserpan/index?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','云盘');" imgName="icon-home" dataurl="https://pan-yz.cldisk.com/pcuserpan/index?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_tbyp_icon"></span>
+							<h3 title="云盘">
+                						云盘
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2171996"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "首页" id="first2171996" onclick="setUrl('2171996','https://mooc1-1.chaoxing.com/visit/interaction?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'0','首页');" imgName="icon-home" dataurl="https://mooc1-1.chaoxing.com/visit/interaction?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_sy_icon"></span>
+							<h3 title="首页">
+                						首页
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+					<li style=""
+						level="1" parent-id="" table-type="" parent-type="" data-id= "2171990"
+					>
+    					
+						
+    					<div role="menuitem" level="1"  focus_element="0"   tabindex="-1"  name = "论文检测" id="first2171990" onclick="setUrl('2171990','https://dayauser.chaoxing.com/passport/login?s=8ccb544e6ccbe1da414ebad0957c8d99',this,'2','论文检测');" imgName="icon-home" dataurl="https://dayauser.chaoxing.com/passport/login?s=8ccb544e6ccbe1da414ebad0957c8d99"
+							 	class="label-item "
+							 >
+        								<span class="icon3 zne_lwjc_icon"></span>
+							<h3 title="论文检测">
+                						论文检测
+							</h3>
+							<span class="slide-arrow icon-h-arrow-l hide"></span>
+						</div>
+						<div class="school-level">
+							<ul>
+							</ul>
+						</div>
+					</li>
+
+            </ul>
+        </div>
+		<div class="menu-slide">
+          <span class="icon"></span>
+        </div>
+    </div>
+	<script type="text/javascript" src="/static/space/js/lang.js"></script>
+	<script type="text/javascript" src="/static/space/nervous/js/jquery.min.js"></script>
+	<script>
+
+		jQuery(document).ready(function () {
+			revertDoubleLeft();
+			cleanEmptySubmenus();
+			changeLanguage();
+		});
+		var scheme='https';
+		if(scheme!=null && scheme!=undefined && scheme!=''){
+			scheme=scheme+'://'+window.location.host;
+		}else{
+			scheme='http://'+window.location.host;
+		}
+		let topHeight = '80'
+		if (topHeight&&'true') {
+			topHeight = Number(topHeight)
+		} else {
+			topHeight =80
+		}
+		var navFlag=false;
+
+		function setRightHeight(height) {
+			$(".con-right .right-con ").css("margin-top",height).css("height", "calc(100vh - " + (height) + "px)")
+		}
+		$(document).ready(function(){
+			if($("#first96313").length>0){
+				var url='https';
+				var fid = '72452';
+				var uid =  '128849149';
+				if (fid!=null && fid!=undefined && fid!="" && uid!=null && uid!=undefined && uid!=""){
+					if(url!=null && url!=undefined && url!=''){
+						url = url+'://'+'fdsmonline.px.chaoxing.com/finance/order/checkSfkp?schoolId=';
+					}else{
+						url='http://fdsmonline.px.chaoxing.com/finance/order/checkSfkp?schoolId=';
+					}
+					$.ajax({
+						url:url+fid+'&uid='+uid,
+						dataType:'json',
+						type:'get',
+						success:function(data){
+							if (data.status){
+								$(".red-point").show()
+							}
+						}
+					})
+				}
+			}
+			// 个性签名
+			if( $(".signature-wrap").length>0){
+                let signatureEle = $(".signature-wrap");
+                let signatureOffSetT = signatureEle.offset().top + signatureEle.height() + 10,
+                    signatureOffSetL = $("#signature").offset().left;
+                $("#signatureCon").css({
+                    "left": signatureOffSetL,
+                    "top": signatureOffSetT
+                })
+                $("#signature").mouseenter(function () {
+        
+                    $("#signatureCon").fadeIn("fast");
+                }).mouseleave(function () {
+                    $("#signatureCon").fadeOut("fast");
+                })
+			}
+			setRightHeight(topHeight)
+			if("https://buujxjy.jxjy.chaoxing.com/studyApp/studying?s=8ccb544e6ccbe1da414ebad0957c8d99".indexOf("/base/index")!=-1 || "https://buujxjy.jxjy.chaoxing.com/studyApp/studying?s=8ccb544e6ccbe1da414ebad0957c8d99".indexOf("/res/pc/curriculum/schedule.html")!=-1){
+				$("#appDownload").show();
+			}else{
+				$("#appDownload").hide();
+			}
+			var backgroundFlag="#ffffff";
+			if("https://buujxjy.jxjy.chaoxing.com/studyApp/studying?s=8ccb544e6ccbe1da414ebad0957c8d99".indexOf("/education/student/stuActiveListEducation")!=-1){
+				backgroundFlag="none";
+			}
+			$("#mainright").html('<iframe id="frame_content" name="frame_content"  allowfullscreen="true" allowtransparency="true"  frameborder="0" scrolling="auto" style="border: 0px;height:calc(100vh - 80px); float:left;position: relative;z-index: 99; background:'+backgroundFlag+';" width="100%" src=""></iframe>');
+			if(navFlag){
+				var _data=$("#first"+"2186230");
+				setNavList( "2186230", "https://buujxjy.jxjy.chaoxing.com/studyApp/studying?s=8ccb544e6ccbe1da414ebad0957c8d99",_data,"0");
+			}else{
+				if ("https://buujxjy.jxjy.chaoxing.com/studyApp/studying?s=8ccb544e6ccbe1da414ebad0957c8d99" === '') {
+					$('.label-item.cur').click();
+				} else {
+					let initUrl = "https://buujxjy.jxjy.chaoxing.com/studyApp/studying?s=8ccb544e6ccbe1da414ebad0957c8d99"
+					const space_token = getToken('', '2186230', initUrl)
+					if (space_token) {
+						initUrl=appendParamsToUrl(initUrl, {space_token})
+					}
+                    statistics('','2186230');
+					$("#frame_content").attr("src", initUrl);
+				}
+			}
+            try{
+                iFrameResizeSetting();
+            }catch(error){
+                 
+            }
+            $('html , body').animate({scrollTop: 0},0);
+            $("#item_first").html("课程");
+			if($(".menu-list-ul .label-item.active").length>0){
+				scrollTop()
+			}
+		})
+        function setUrl(id, url,_this,aot_value, app_name){
+			// 防止点击箭头时触发菜单逻辑
+			if (event && $(event.target).is('.slide-arrow')) return false;
+			// 更新选中状态
+			$(".menu-list .cur").removeClass("cur");
+			$(_this).addClass("cur")
+            const tableType=$(_this).parent().attr('table-type')
+            const dataId=$(_this).parent().attr('data-id')
+			const space_token = getToken(tableType,dataId, url)
+			if (space_token) {
+				url=appendParamsToUrl(url, {space_token})
+			}
+            statistics(tableType,dataId)
+            try {
+				// 处理可展开的一级菜单（无URL）
+				if (!url && $(_this).find(".slide-arrow:not(.hide)").length) {
+					// 处理查询首个可访问菜单的逻辑
+					findFirstAvailable(_this);
+					return false;
+				}
+			} catch (e){}
+
+			$("#to_top").remove();
+			var navUrl=url;
+			var backHigh=80;
+			var menuTxt=$(_this).attr('name');
+			$(_this).attr('aria-label',menuTxt+'菜单项已访问').siblings().removeAttr('aria-label');
+			if ($(_this).hasClass("label-item")){
+				$('.label-item').removeClass("active")
+				// 如果是收缩状态,就不触发按钮旋转
+				if ($('.label-item-retract').length > 0) {
+					$('.slide-arrow').removeClass("active");
+				}
+				$(_this).addClass("active")
+			}
+			$(_this).attr('focus_element', '1').siblings().attr('focus_element', '0');
+			$(_this).nextAll().attr('tabindex', -1);
+			$("#navName").text(app_name)
+			if(app_name == "首页"){
+				$(".bodyBg").show()
+			}else {
+				$(".bodyBg").hide()
+			}
+			if(id!=null && id=='app'){
+				$("#item_first").hide();
+				if(!navFlag){
+    				$("#item_back").show();
+					backHigh=160;
+					$("#item_back").children().attr("onclick","setUrl('back','"+scheme+"/base/app?fid="+siteFid+"&tid="+tid+"')");
+					setRightHeight(topHeight+64);
+				}
+			}else if(id!=null && id=='market'){
+				$("#item_first").hide();
+				if(!navFlag){
+    				$("#item_back").show();
+					backHigh=160;
+					var dataurl=$(".label-item.active").attr('dataurl');
+    				$("#item_back").children().attr("onclick","setUrl('back','"+dataurl+"')");
+					setRightHeight(topHeight+64)
+				}
+			}else if(id!=null && id=='common'){
+				$("#item_first").hide();
+    			$("#item_back").hide();
+				setRightHeight(topHeight)
+			}else if(id!=null && id=='index'){
+				$("#item_first").hide();
+				if(!navFlag){
+    				$("#item_back").show();
+					backHigh=160;
+    				$("#item_back").children().attr("onclick","setUrl('back','"+scheme+"/base/index?fid="+siteFid+"&tid="+tid+"')");
+					setRightHeight(topHeight+64)
+				}
+			}else if(id!=null && id=='back'){
+				if(!navFlag){
+					$("#item_first").show();
+				}
+                $("#item_back").hide();
+				setRightHeight(topHeight)
+			}else if(id!=null && id=='rapp'){
+				$("#item_first").hide();
+				if(!navFlag){
+    				$("#item_back").show();
+					backHigh=160;
+    				$("#item_back").children().attr("onclick","setUrl('recentsapp','"+scheme+"/base/getRecentsApp')");
+					setRightHeight(topHeight+64)
+				}
+			}else{
+				if( id=='account'){
+					$("#item_first").html('账号管理');
+				}else if( id=='recentsapp'){
+					$("#item_first").html('最近使用');
+				}else{
+					$("#item_first").html($(_this).attr("name"));
+				}
+				if(!navFlag){
+					$("#item_first").show();
+				}
+                $("#item_back").hide();
+				if(aot_value!=1 && aot_value!=2){
+					if ($(_this).hasClass("label-item")){
+						$('.label-item').removeClass("active")
+						$(_this).addClass("active")
+					}
+				}
+				setRightHeight(topHeight)
+			}
+			
+			if(aot_value==1){
+				window.open("/space/out_link.shtml?ename=&burl="+url);
+			}else if(aot_value==2){
+				if(url.includes("base/app")){
+					url+="&tid="+tid;
+				}
+				window.open(url);
+			}else if(aot_value==3){
+				window.location.href="/space/out_link.shtml?ename=&burl="+url;
+			}else if(aot_value==4){
+				window.location.href=url;
+			}else{
+    			if(url.indexOf("/base/index")!=-1 || url.indexOf("/res/pc/curriculum/schedule.html")!=-1){
+    				$("#appDownload").show();
+    			}else{
+    				$("#appDownload").hide();
+    			}
+				if(url.indexOf("/wfw/space/redirectUrl")!=-1 ){
+					$.ajax({
+						type: "post",
+						url: "/wfw/space/verifyApp",
+						data:{tid:tid,fid:siteFid,nappId:id},
+						dataType: "json",
+						async:false,
+						success: function(data){
+							if(data.status){
+								//是 审批/表单 应用，显示权限按钮
+								url=url+"&permissionGroupId="+data.permissionGroupId;
+							}
+						}
+					})
+				}
+				if(url.indexOf("/pcuserpan/index")!=-1){
+					$.ajax({
+						type: "post",
+						url: "/pan/getToken",
+						dataType: "json",
+						async:false,
+						success: function(data){
+							if(data.status){
+								var uid =  '128849149';
+								url=url+"&uid="+uid+"&p_auth_token="+data.token;
+							}
+						}
+					})
+				}
+    			if(url.indexOf("/base/app")!=-1 || url.indexOf("/base/index")!=-1 ){
+					if(id==null || id==undefined || id=='' || id!='common'){
+						url=url+"&fid="+siteFid+"&tid="+tid;
+					}
+    			}else{
+					if(url.indexOf("notice.chaoxing.com")!=-1  || url.indexOf("/pc/notice/myNotice")!=-1  ){
+						//$(_this).find(".inform-txt").hide();
+					}else{
+						//$(".inform-txt").show();
+					}
+    			}
+				
+				var backgroundFlag="#ffffff";
+    			if(url.indexOf("/education/student/stuActiveListEducation")!=-1){
+    				backgroundFlag="none";
+    			}
+				$("#mainright").html('<iframe id="frame_content" name="frame_content" allowfullscreen="true" allowtransparency="true"  frameborder="0" scrolling="auto" style="border: 0px; height:calc(100vh - '+backHigh+'px); float:left;position: relative;z-index: 99; background: '+backgroundFlag+';" width="100%" src=""></iframe>');
+                $("#frame_content").attr("src", url);
+				$("#centerInput").attr('tabindex', 0).focus();
+				
+				if(id!=null && id!=undefined && id!='app' && navFlag){
+					setNavList(id, navUrl,_this,aot_value);
+				}
+
+                var offsetTop = $("#frame_content").offset().top;
+                var offsetLeft = $("#frame_content").offset().left;
+                var marObj = {
+                   paddingL: offsetLeft,
+                   paddingT: offsetTop,
+                   paddingR:0,
+                   fullScreen:1
+                };
+                document.getElementById('frame_content').contentWindow.postMessage(JSON.stringify(marObj), "*");
+
+                $('html , body').animate({scrollTop: 0},0);
+                
+			}
+        }
+        function switchSite(fid,name,_this,wfworg,tid,roleId){
+			var nowFid = '72452';
+			if(nowFid!=null && nowFid!=undefined && nowFid!="" && fid!=null && fid!=undefined && fid!="" && nowFid==fid){
+				 location.href = "/base?fid="+fid+"&wfworg="+wfworg+"&tid="+tid;
+				 return;
+			}
+            $(_this).addClass("active").siblings().removeClass("active");
+            $.ajax({
+                url:'/base/switchSite',
+                data:{siteFid:fid,siteName:name,siteTid:tid,siteRoleId:roleId},
+                type:'post',
+				dataType:'json',
+                success:function(data){
+					if(data.status){
+						var schemeType='https';
+						if(schemeType!=null && schemeType!=undefined && schemeType!=''){
+							schemeType='http';
+						}
+						let siteContextPath ="";
+						if (fid == 340630) {
+							// 这个之后改为从接口返回
+							siteContextPath="/space";
+						}
+						if(data.b){
+							if(data.domain.indexOf(window.location.host)!=-1){
+								location.href = siteContextPath+"/base?fid="+fid+"&wfworg="+wfworg+"&tid="+tid;
+							}else{
+    							if(data.domain.indexOf("http://")!=-1 || data.domain.indexOf("https://")!=-1){
+    								window.open(data.domain);
+    							}else{
+    								window.open(schemeType+"://"+data.domain + siteContextPath +"/base?fid="+fid+"&wfworg="+wfworg+"&tid="+tid);
+    							}
+							}
+						}else{
+							if(window.location.host.indexOf(data.domain)!=-1){
+            					var title="";
+                				if(name!=null && name!=undefined && name!="" && name.length>13){
+                					title = name.substring(0, 13)+"..."
+                				}else{
+            						title=name;
+            					}
+                                $("#siteName").html(title).attr("title",name);
+                                location.href = "/base?fid="+fid+"&wfworg="+wfworg+"&tid="+tid;
+							}else{
+								window.open(schemeType+"://"+data.domain+"/base?fid="+fid+"&wfworg="+wfworg+"&tid="+tid);
+							}
+
+						}
+					}
+                }
+            })
+        }
+
+		$(document).on("keydown", function (e) {
+			if ($(e.target).attr('data-read') === '已阅读完' && e.keyCode == 9) {
+				if ($(".menu-list-ul>.label-item.active").parent().index() < $(".menu-list-ul>.label-item").length - 1) {
+					$(".menu-list-ul>.label-item").attr('tabindex', 0);
+					$(".menu-list-ul>.label-item[focus_element='1']").focus();
+				}
+			}
+			if (e.shiftKey && e.keyCode == 9 && $(e.target).parents('.menu').length > 0) {
+				$(e.target).siblings().attr('tabindex', 0)
+			}
+		});
+		//英文名定位 添加定位滚动效果
+		function scrollTop(){
+			var ptopnus=$(".menu-list-ul").offset().top;
+			var currentNus=$(".menu-list-ul .label-item.active").parent().eq(0).offset().top;
+			let real=currentNus-ptopnus;
+			$(".menu").mCustomScrollbar("scrollTo", real);
+		}
+		// 收件箱红点显示
+			$.ajax({
+			url: '/base/getNoticeCount',
+			type: 'get',
+			dataType: 'json',
+			success: function (data) {
+				if (data.status) {
+                    var notice=data.msg;
+					window._notice = notice
+                    //匹配收件箱的url前缀匹配，加上红点
+                    var messageBox = $(".label-item[dataurl*='://notice.chaoxing.com/pc/notice/myNotice']");
+                    if(notice) {
+						messageBox.addClass("box-new-message")
+					}
+					messageBox.on("click", function() {
+						messageBox.addClass("disable")
+					})
+
+				}
+			}
+		})
+		// 收起侧边栏
+		var isclick = 1;
+		var icon3, iconImg = false;
+		$(".menu-slide .icon").click(function () {
+			$(".school-level").hide();
+			$(this).toggleClass("menu-slide-rotate");
+			var barWidth = $(".con-left").hasClass("con-left-float") ? 200 : 220;
+			if (isclick == 1) {
+				if ($(".con-left").hasClass("showIcon")) {
+                    $(".menu-list .menu-list-ul>li>.school-level .icon-space,.menu-list .menu-list-ul>li>.school-level img").hide();
+					// 有图标
+					if ($(".con-left").hasClass("con-left-float")) {
+						$(".con-right").animate({"margin-left": "114px"}, 300);
+					} else {
+						// 平铺
+						$(".con-right").animate({"margin-left": "92px"}, 300);
+					}
+					$(".signature-wrap").hide();
+					$(".con-left").animate({width: "72px"}, 300);
+					$(".menu-list .label-item[level=1]").addClass("label-item-retract");
+					$(".menu-list .school-level").fadeOut(300);
+					$(".slide-arrow.active").removeClass("active");
+					$(".menu-list .school-level").addClass("menu-child");
+					/*兼容一些定制情况*/
+					if ($(".menu-list").find(".icon3").length > 0) {
+						icon3 = true;
+						$(".menu-list .icon3").addClass("icon-space");
+						$('.icon3').next('h3').addClass('custom-h3-style');
+					}
+					if ($(".menu").find(".iconImg").length > 0) {
+						iconImg = true;
+						$(".menu .iconImg").addClass("custom-img-style");
+						$('.menu .iconImg').next('h3').addClass('custom-h3-style');
+					}
+					$(".menu-list .cur").parents(".school-level").prev().addClass("cur");
+				} else {
+					$(".con-left").animate(
+							{
+								left: "-" + barWidth + "px",
+							},
+							300
+					);
+					$(".con-right").animate({
+						"margin-left": "0px",
+					});
+				}
+				isclick = 0;
+			} else {
+				// 展开
+				if ($(".con-left").hasClass("showIcon")) {
+                    $(".menu-list .menu-list-ul>li>.school-level .icon-space,.menu-list .menu-list-ul>li>.school-level img").show();
+					$(".menu-list .itemHover").removeClass("itemHover");
+					$(".menu-list .label-item[level=1]").removeClass("label-item-retract");
+					$(".menu-list .school-level").removeClass("menu-child");
+					$(".signature-wrap").show();
+					/*兼容一些定制情况*/
+					if (icon3) {
+						$(".menu-list .icon3").removeClass("icon-space");
+						$('.icon3').next('h3').removeClass('custom-h3-style');
+					}
+					if (iconImg) {
+						$(".menu .iconImg").removeClass("custom-img-style");
+						$('.menu .iconImg').next('h3').removeClass('custom-h3-style');
+					}
+					// 恢复展开状态下的子级菜单结构
+					getBackSubmenus();
+				}
+				var left = $(".con-left").hasClass("con-left-float") ? 20 : 0;
+				$(".con-left").animate(
+						{
+							width: barWidth + "px",
+							left: left + "px",
+						},
+						300
+				);
+				$(".con-right").animate(
+						{
+							"margin-left": 20 + barWidth + left + "px",
+						},
+						300
+				);
+				isclick = 1;
+			}
+		});
+
+		// 侧边栏半收起的时候子集的位置
+		$(".showIcon .menu-list").on("mouseenter", ".label-item", function () {
+			if (isclick == 1) return;
+
+			var offTop = $(this).offset().top;
+			var itemHeight = $(this).height();
+			var boxHeight = $(this).next().height();
+			var itemHeight = $(this).height();
+			var top = offTop;
+			// 位置超过屏幕高度的时候
+			if (top + boxHeight > $(window).height()) {
+				top = $(window).height() - boxHeight - 10;
+			}
+			$(this).next().css({top: top});
+		});
+
+		$(".con-left").on("click", ".menu-list ul li .label-item", function (e) {
+			// 仅当侧边栏收起（存在.label-item-retract）时，才高亮父级菜单
+			if ($(".label-item.label-item-retract").length > 0) {
+				// 向上查找所有父级菜单项并添加cur类
+				let parentLi = $(this).closest("li");
+				while (parentLi.length) {
+					const labelItem = parentLi.children(".label-item");
+					if (labelItem.length) {
+						labelItem.addClass("cur");
+					}
+					parentLi = parentLi.parent().closest("li");
+				}
+			}
+		});
+
+		$(".con-left").on("click", ".menu-list ul li .label-item .slide-arrow", function (e) {
+			if (!$(".menu-slide .icon").hasClass('menu-slide-rotate')) {
+				$(this).toggleClass("active");
+				$(this).parent().next().stop().slideToggle();
+				stopBubble(e);
+			}
+			return false
+		})
+
+		function findFirstAvailable(_this) {
+			const menu = $(_this);
+			const arrow = menu.children(".slide-arrow");
+			const submenu = menu.next('.school-level');
+			const isActivated = arrow.hasClass('active');
+			const isRetract = $(".label-item-retract").length > 0;
+
+			const expandMenu = () => {
+				if (!isActivated) {
+					arrow.addClass('active');
+				}
+
+				// 自动处理第一个子菜单项
+				const firstChild = submenu.find('.label-item').first();
+				if (!firstChild.length) return false;
+
+				const childUrl = firstChild.attr('dataurl');
+				const childHasSubmenu = firstChild.find(".slide-arrow:not(.hide)").length > 0;
+
+				if (childUrl) {
+					// 情况1: 子菜单有URL → 直接点击
+					firstChild.click();
+				} else if (childHasSubmenu) {
+					// 情况2: 子菜单可展开 → 展开并点击第一个三级菜单
+					const firstChildArrow = firstChild.children(".slide-arrow");
+					if (firstChildArrow.hasClass('active') || isRetract) {
+						// 移除所有cur类
+						$(".menu-list").find(".cur").removeClass("cur");
+						firstChild.next('.school-level').find('.label-item').first().click();
+					} else {
+						firstChildArrow.addClass('active');
+						firstChild.next('.school-level').stop().slideDown(() => {
+							firstChild.next('.school-level').find('.label-item').first().click();
+						});
+					}
+				}
+			};
+			// 如果菜单已展开，直接处理子菜单；否则先展开
+
+			if (isRetract || isActivated){
+				expandMenu();
+			} else {
+				submenu.stop().slideDown(() => expandMenu())
+			}
+		}
+
+		function setChildMenu() {
+			// 找到所有根下的子级菜单
+			$(".menu-list-ul>li[level!='1']").each(function (index, dom) {
+				const parentId = $(dom).attr('parent-id')
+				const tableType = $(dom).attr('parent-type')
+				const parentDom = $('.menu-list li[data-id="' + parentId + '"][table-type="' + tableType + '"]');
+				if (parentDom.length === 0) {
+					return
+				}
+				// 展开图标
+				parentDom.children('.label-item').children(".slide-arrow").removeClass('hide');
+				// 插入节点
+				parentDom.children(".school-level").children("ul").append($(dom)).parent().hide();
+				$(dom).show()
+			})
+
+		}
+		setChildMenu()
+
+		// 清除多余的子菜单容器
+		function cleanEmptySubmenus() {
+			$('.school-level').each(function() {
+				const $ul = $(this).find('> ul');
+				// 检查<ul>内部是否有任何<li>元素
+				if ($ul.length && $ul.children('li').length === 0) {
+					// 移除整个子菜单容器
+					$(this).remove();
+
+					// 隐藏父菜单项的箭头图标
+					$(this).prev('.label-item')
+							.find('.slide-arrow')
+							.addClass('hide');
+				}
+			});
+		}
+
+		function getBackSubmenus() {
+			var currentSelected;
+			// 预检查：如果所有持有cur的对象都没有子菜单，说明最终需要保留的一项是有箭头的特殊父类
+			const allCurItems = $(".menu-list .label-item.cur");
+			// 检查是否有任何一个`cur`项目的`.slide-arrow`含有`hide`类
+			const hasCurInSubmenu = allCurItems.toArray().some(item =>
+					$(item).find(".slide-arrow").hasClass("hide")
+			);
+			// 特殊父类就要保证最内层的cur不删除
+			if (!hasCurInSubmenu && allCurItems.length > 0) {
+				// 找出level最大的项（即最深层级的选中项）
+				let maxLevelItem = null;
+				let maxLevel = -1;
+				allCurItems.each(function() {
+					const level = parseInt($(this).attr("level")) || 0;
+					if (level > maxLevel) {
+						maxLevel = level;
+						maxLevelItem = $(this);
+					}
+				});
+				// 清除其他项的cur，保留maxLevelItem
+				allCurItems.not(maxLevelItem).removeClass("cur");
+			} else {
+				// 常规子级就直接清除所有父类即可（因为子级是cur那其他cur类一定在父级）
+				$(".menu-list .cur").each(function () {
+					if ($(this).next(".school-level").length > 0) {
+						$(this).removeClass("cur");
+					}
+				});
+			}
+
+			// 获取当前选中唯一的菜单项
+			currentSelected = $(".menu-list .cur");
+			if (!currentSelected.length) return;
+			// 存储所有需要展开的菜单项（从顶级到当前选中项的直接父级）
+			const menusToExpand = [];
+			let parentLi = currentSelected.closest("li");
+
+			while (parentLi.length) {
+				const parentMenu = parentLi.children(".label-item");
+				if (parentMenu.length) {
+					menusToExpand.unshift({
+						menu: parentMenu,
+						submenu: parentMenu.next(".school-level")
+					});
+				}
+				parentLi = parentLi.parent().closest("li");
+			}
+
+			// 逐级展开（直接操作DOM而不是触发点击事件）
+			menusToExpand.forEach(item => {
+				const { menu, submenu } = item;
+				// 如果被选中项是父类且是被选中项,那就不展开其子类
+				if (submenu.length && (hasCurInSubmenu || !menu.hasClass("cur"))) {
+					menu.find(".slide-arrow").addClass("active");
+					submenu.stop().slideDown();
+				}
+			});
+		}
+
+		function revertDoubleLeft() {
+			var bgColor = $(".con-left").css("background-color"); // 获取计算后的背景色
+			// 判断是否为透明/空/白色
+			if (!bgColor || bgColor === "rgba(0, 0, 0, 0)" || bgColor === "transparent" ||
+					bgColor === "rgb(255, 255, 255)" || bgColor === "#ffffff") {
+				$(".con .menu-slide .icon").addClass("whileBGColor");
+			}
+		}
+
+		function stopBubble(e) {
+			if (e && e.stopPropagation) {
+				e.stopPropagation();
+			} else {
+				window.event.cancelBubble = true;
+			}
+		}
+		function getToken(tableType,id,url) {
+			try {
+				if (!id || !tableType) {
+					return null;
+				}
+				if (tableType !== '2') {
+					return null;
+				}
+				if (!url) {
+					return null;
+				}
+				if (!url.startsWith("http")) {
+					return null;
+				}
+				if (url.includes("/wfw/space/redirectUrl") || url.includes("/wfw/space/marketAppsIndex")) {
+					// 跳转 应用 ，多应用，不拼接token
+					return null;
+				}
+				// 如果包括当前域名，不查询token
+				if (url.includes(location.hostname)) {
+					return null;
+				}
+				let token = null;
+				$.ajax({
+					type: 'get',
+					url: '/base/getToken',
+					async: false,
+					dataType:"json",
+					data: {id},
+					success: (data) => {
+						if (data.status) {
+							token = data.data;
+						}
+					}
+				});
+				return token;
+			} catch (e) {
+				return null
+			}
+		}
+		function appendParamsToUrl(url, params) {
+			let hasQuery = url.includes('?');
+			let sep = hasQuery? '&' : '?';
+			let paramStr = '';
+			for (let key in params) {
+				if (params.hasOwnProperty(key)) {
+					paramStr += sep + key + '=' + params[key];
+					sep = '&';
+				}
+			}
+			return url + paramStr;
+		}
+        function statistics(tableType,id) {
+            if (!id || !tableType) {
+                return;
+            }
+            // 具体参数含义见后端
+            const fid = '72452';
+            const uid =  '128849149';
+            if (tableType === '0') {
+                id="a_"+id;
+            }else if (tableType === '1') {
+                id="t_"+id;
+            }else if (tableType === '2') {
+                id="n_"+id;
+            }
+            const data ={
+                id,
+                type:1,
+                uid,
+                fid
+            }
+            $.ajax({
+                type: 'get',
+                url: '/base/statistics',
+                async: true,
+                data
+            });
+        }
+	</script>
+	
+<script type="text/javascript">
+	var timer;
+	function scroll(dom) {
+		var maxW = dom.find("span").width() - dom.width();
+		if(maxW <= 0){
+			return;
+		}
+		dom.css("text-overflow","unset");
+		timer = setInterval(function() {
+			dom[0].scrollLeft++;
+			if(dom[0].scrollLeft >= maxW){
+				clearInterval(timer);
+			}
+		}, 10);
+	}
+
+</script>        <div class="con-right style3" tabindex="-1">
+            <div class="pageBack" id="item_back" style="display: none">
+                <div  style="display: flex;align-items: center;cursor: pointer;">
+                    <img src="/static/space/nervous/images/back-btn.png">
+                    <span>返回</span>
+                </div>
+            </div>
+            <div class="right-con" style="overflow-x:hidden;min-width:900px">
+    			<div class="bodyBg"></div>
+				<div type="" role="none" tabindex="-1" aria-label="已进入菜单，请按tab键" id="centerInput" style="position: fixed;z-index: -11;"></div>
+                <div class="center" style="padding-top: 0px;" id="mainright"  tabindex="-1">
+	<iframe id="frame_content" name="frame_content" onreadystatechange="onloading.call(this)" allowfullscreen="true" allowtransparency="true"  frameborder="0" scrolling="auto" style="border: 0px; height:calc(100vh - 80px);position: relative;z-index: 99; background: #ffffff;" width="100%" src=""></iframe>
+                </div>
+                <div class="" id="readEnd" aria-label="" data-read="已阅读完" tabindex="0"></div>
+            </div>
+
+    	</div>
+    </div>
+        <div class="appDownload" id="appDownload" style="display: none;">
+            <ul>
+                <li class="appDown black" onclick="downloadPc();">
+					<span class="download"><img src="/static/space/nervous/images/download.png"></span>PC客户端下载
+                </li>
+                <li class="appDown black" onclick="downloadZb();">
+                   <span class="download"><img src="/static/space/nervous/images/download.png"></span>直播客户端下载
+                </li>
+            </ul>
+        </div>
+    <div class="popupCon" id="pu-code">
+        <div class="popup pu-code">
+            <div class="pu-title"  style="margin-top: 0;">
+                <h6>请输入邀请码</h6>
+            </div>
+            <div class="pu-con">
+                <input type="text" id="invitecode" placeholder="请输入课程、应用、小组、直播、云盘、教研室邀请码">
+            </div>
+            <div class="pu-btns">
+                <span class="btn-cancel">取消</span>
+                <span class="btn-sure">确定</span>
+            </div>
+        </div>
+    </div>
+    <div class="popupCon" id="pu-tips">
+        <div class="popup pu-tips">
+            <div class="pu-title">
+                <h6>提示</h6>
+            </div>
+            <div class="pu-con">
+                <img src="/static/space/nervous/images/errorTips.png" alt="">
+                <p>该邀请码应用暂无pc端访问方式</p>
+            </div>
+            <div class="pu-btns">
+                <span class="btn-cancel">取消</span>
+                <span class="btn-sure">确定</span>
+            </div>
+        </div>
+    </div>
+    <div class="popupCon" id="pu-course" >
+        <div class="popup pu-course" style="width: 440px; height: auto;">
+            <div class="pu-title">
+                <h6>应用详情</h6>
+                <span class="pu-close"></span>
+            </div>
+            <div class="pu-con">
+                <img src="" class="course-cover" alt="">
+                <div class="course-mes">
+                    <h6></h6>
+                </div>
+				<input type="hidden" id="appId" value="">
+				<input type="hidden" id="appCode" value="">
+				<input type="hidden" id="appUrl" value="">
+				<input type="hidden" id="appName" value="">
+            </div>
+            <div class="pu-btns">
+                <span class="btn-join">访问应用</span>
+            </div>
+        </div>
+    </div>
+	
+    <div class="pouop puTips" id="puTips">
+        <!--    mark-icon.png  sucese-icon.png  添加成功  添加失败-->
+        <img src="/static/space/nervous/images/error-icon.png" alt="">
+        <p></p>
+    </div>
+	
+    <div class="popup" style="display:none" id="sitePopup">
+    	<div class="window">
+    		<div class="p-title">
+切换单位/角色				<span class="close"></span>
+			</div>
+    		<div class="search">
+    			<input type="text" placeholder="请输入单位名称/fid搜索" id="searchName" oninput="searchSiteList();">
+				<span  onclick="searchSiteList();"  style="cursor: pointer;" >搜索</span>
+    		</div>
+    		<div class="company">
+    			<ul>
+    
+    			</ul>
+    		</div>
+    	</div>
+    </div>
+	
+    <div class="z-popup-wrap">
+        <div class="pu-del">
+            <div class="pu-title">提示</div>
+            <div class="pu-con">
+                <img src="/static/space/nervous/images/errorTips.png" alt="">
+                <div class="z-tips">由于您在本页面长时间未操作，系统将刷新页面，请您稍后再进行操作</div>
+            </div>
+            <div class="pu-btn">
+                <span>确认</span>
+            </div>
+        </div>
+    </div>
+
+<script type="text/javascript" src="/static/space/nervous/js/jquery.mCustomScrollbar.concat.min.js?t="></script>
+<script type="text/javascript" src="/static/space/nervous/js/comon.js?t="></script>
+<script type="text/javascript" src="/static/space/nervous/js/page.js?t="></script>
+<script type="text/javascript" src="/static/space/nervous/js/iframeResizer.min.js?t="></script>
+<script>
+	var siteFid = '72452';
+	var tid = '0';
+	var page=1;
+	var pageSize=10;
+	var scrollFlag=true;
+    function setTopHeight() {
+        // topHeight的值从left.vm读取
+        $(".header .space-unit").css('height',topHeight)
+        $(".header .space-con").css('height',topHeight)
+        $(".header").css('height',topHeight)
+        $(".pageBack ").css('top',topHeight)
+
+        $(".con-left.con-left-float").css('top', topHeight + 20).css("height", "calc(100vh - " + (topHeight + 20 * 2) + "px)")
+        $(".con-left:not(.con-left-float)").css("height", "calc(100vh - " + (topHeight) + "px)").css('top',topHeight)
+        $(".con-right .right-con>.center>iframe").css("height", "calc(100vh - " + (topHeight) + "px)")
+        setRightHeight(topHeight)
+    }
+
+    $(document).ready(function () {
+        setTopHeight()
+        if (siteFid == 122826){ //单位定制增加无障碍工具栏
+            var script = document.createElement('script');
+            script.src = "https://mh.chaoxing.com/sv2/mh1plugs/guide-components.js";
+            document.getElementsByTagName('head')[0].appendChild(script);
+
+            setTimeout(function(){
+                if($("#tabbox").length>0 && !$("#tabbox").is(':hidden')){
+                    $("#openRead").addClass('hasOpen').text('关闭无障碍面板');
+                }
+            },2200)
+
+            $("#openRead").click(function() {
+                if($(this).hasClass('hasOpen')){
+                    accessiblePlugs.closetools();
+                    $(this).removeClass('hasOpen').text('开启无障碍面板')
+                }else{
+                    $(this).addClass('hasOpen');
+                    $(this).text('关闭无障碍面板');
+                    if(accessiblePlugs.isFirstOpen){
+                        accessiblePlugs.resetDom();
+                        accessiblePlugs.isFirstOpen = false;
+                    }else{
+                        accessiblePlugs.openguid();
+                    }
+                }
+            });
+
+            $("body").on('click','#contents div:last-child',function(){
+                $("#openRead").removeClass('hasOpen').text('开启无障碍面板');
+            })
+        }
+	  $(".con-left").css("top",$(".r-header").height());
+        /* 导航下拉 */
+        $(".head-nav-more .head-more").click(function (e) {
+            e.stopPropagation();
+            $(this).next().stop().slideToggle('fast');
+        });
+        $(document).click(function (e) {
+            e.stopPropagation();
+            $(".head-more-list").slideUp('fast');
+        });
+        //   删除头部导航
+        $(".head-nav").on('click', ".head-nav-list li .nav-close", function (e) {
+            e.stopPropagation();
+            $(this).parents('li').remove();
+            var moreLi = $(".head-more-list ul li");
+            var dataIdThis=$(this).parent().find('.nav-name').attr('data-id');
+            if (moreLi.length > 0) {
+                var moreFistLi = moreLi.eq(0).remove();
+                $(".head-nav-list ul").append(moreFistLi);
+                if ($(".head-more-list ul li").length == 0) {
+                    $(".head-nav-more").hide();
+                }
+            }
+        });
+        $(".head-nav").on('click', ".head-more-list li .nav-close", function (e) {
+            e.stopPropagation();
+            $(this).parents('li').remove();
+            if ($(".head-more-list ul li").length == 0) {
+                $(".head-nav-more").hide();
+            }
+        });
+
+        document.onkeydown = function(e) {
+            if(e.keyCode === 13) {
+                document.activeElement.onclick(e);
+                $("#centerInput").click();
+            }
+        };
+        var pop = false
+        if (pop){
+            siteListShow(true);
+        }
+    });
+
+	function setNavList(dataId,navUrl,_this,aot_value) {
+        var dataName ='';
+		if(dataId!=null && dataId!=undefined && dataId=='account' ){
+			dataName = '账号管理';
+		}else{
+			dataName = $(_this).attr("name");
+		}
+		var onc="#first"+dataId;
+        var setUrlT ="setUrl('"+dataId+"','"+navUrl+"','"+onc+"','"+aot_value+"');";
+		$(".head-nav-list ul li").removeClass('cur');
+		$(".head-more-list ul li").removeClass('cur');
+		var dataLi=$("#nav"+dataId);
+		if(dataLi.length>0){
+			dataLi.addClass('cur');
+		}else{
+			var navLen=$(".head-nav-list ul li").length;
+			if(navLen>5){
+				$(".head-nav-more").show();
+				var navListStr2 = '<li class="cur" id="nav'+dataId+'"><span class="nav-name" data-id="'+dataId+'" onclick="' + setUrlT + '">' + dataName + '</span><span class="nav-close"></span></li>';
+				$(".head-more-list ul").append(navListStr2);
+			}else{
+				 $(".head-nav-more").hide();
+				 var navListStr1 = '<li class="cur" id="nav'+dataId+'"><span class="nav-name" data-id="'+dataId+'" onclick="' + setUrlT + '">' + dataName + '</span><span class="nav-close"></span></li>';
+				 $(".head-nav-list ul").append(navListStr1);
+			}
+		}
+    };
+	function siteListShow(flag){
+		$("body").css("overflow","hidden")
+        $('#searchName').attr('disabled',true)
+        $.ajax({
+            url:'/base/cacheUserOrg',
+			data:{searchName:'',_t:new Date()},
+            dataType:'json',
+            type:'post',
+            success:function(data){
+                if(data.site.length > 0){
+                    var html = "";
+                    for ( var j = 0; j < data.site.length; j++) {
+                        html += "<li id = '"+data.site[j].fid+"' onclick=\"switchSite("+data.site[j].fid+",'"+data.site[j].schoolname+"',this,'"+data.site[j].wfworg+"',"+data.site[j].tid+",'"+data.site[j].roleid+"')\"";
+                        if(siteFid == data.site[j].fid && tid == data.site[j].tid){
+                            html += " class=\"active\"";
+                        }
+						html += " title='"+ data.site[j].schoolname+"'><h3>"+data.site[j].schoolname+" </h3><span class='unit-select'></span></li>";
+                    }
+                    $("#sitePopup ul").html(html);
+                }else{
+					$("#sitePopup ul").html('');
+				}
+                if (flag) {
+                    //如果当前单位开启了进入单位时显示切换弹窗，并且有多个模板或者多个单位
+                    if (data.site.length >1) {
+                        $("#sitePopup").show();
+                    }
+                } else {
+                    $("#sitePopup").show();
+                }
+                $('#searchName').attr('disabled',false).focus();
+                $('#sitePopup .company li:visible:first').addClass('hover-cla').siblings().removeClass('hover-cla');
+                $("#sitePopup .company").scrollTop(0)
+            }
+        })
+	}
+	
+	function searchSiteList(){
+		$("body").css("overflow","hidden")
+		var searchName=$("#searchName").val();
+		if(searchName==null || searchName==undefined ){
+			searchName='';
+		}
+		if(searchName != '') {
+			var lis = $("#sitePopup ul li");
+			if(lis != null) {
+				for(var i = 0; i <= lis.length; i++) {
+					var li = lis[i];
+					var id = $(li).attr('id') + "";
+					var title = $(li).attr('title') + "";
+					if(id == searchName || title.indexOf(searchName) != -1) {
+                        // 删除span, 保留内容
+                        // 将关键词换个颜色
+                        $(li).find('h3 span').contents().unwrap();
+                        let nameHtml = $(li).find('h3').html()
+                        if (nameHtml) {
+                            nameHtml=nameHtml.replace(searchName,'<span style="color: #4a68d1">'+searchName+'</span>');
+                        }
+                        $(li).find('h3').html(nameHtml)
+						$(li).show();
+					}else {
+						$(li).hide();
+					}
+				}
+			}
+		}else {
+			var lis = $("#sitePopup ul li");
+			if(lis != null) {
+				for(var i = 0; i <= lis.length; i++) {
+					$(lis[i]).show();
+                    $(lis[i]).find('h3 span').contents().unwrap();
+				}
+			}
+		}
+        $('#sitePopup .company li:visible:first').addClass('hover-cla').siblings().removeClass('hover-cla');
+        $("#sitePopup .company").scrollTop(0)
+	}
+
+
+    // 键盘是否按下
+    let IS_KEYCODE=true
+    // 鼠标移入,加样式
+    $(document).on('mouseenter', '#sitePopup .company li', function () {
+        if (IS_KEYCODE) {
+            $(this).addClass('hover-cla').siblings().removeClass('hover-cla');
+        }
+    })
+    $(document).on('keydown', function (e) {
+        // 如果隐藏不管了
+        if ($('#sitePopup').is(':hidden')) {
+            return
+        }
+        IS_KEYCODE = false;
+        // 获取元素在可见元素集合中的索引
+        let hoverDom = $("#sitePopup .hover-cla");
+        let index = hoverDom.parent().children(':visible').index(hoverDom);
+        let changeUnitIndex = index ? index : 0;
+        switch (e.keyCode) {
+                // 上
+            case 38: {
+                if (changeUnitIndex > 0 && changeUnitIndex < $("#sitePopup li:visible").length) {
+                    changeUnitIndex--;
+                    $("#sitePopup li:visible").eq(changeUnitIndex).addClass('hover-cla');
+                    $("#sitePopup li:visible").eq(changeUnitIndex + 1).removeClass('hover-cla');
+                }
+                let li = $("#sitePopup li:visible").eq(changeUnitIndex);
+                var boxH = $("#sitePopup .company").height();
+                var offSetTop = li.position().top;
+                var liH = li.height();
+                var scrollTop = $("#sitePopup .company").scrollTop();
+                if (offSetTop < 0 && scrollTop > 0) {
+                    $("#sitePopup .company").scrollTop(scrollTop - liH);
+                }
+                break;
+            }
+                // 下
+            case 40: {
+                if (changeUnitIndex < $("#sitePopup li:visible").length) {
+                    changeUnitIndex++;
+                    let li = $("#sitePopup li:visible").eq(changeUnitIndex);
+                    li.addClass('hover-cla');
+                    $("#sitePopup li:visible").eq(changeUnitIndex - 1).removeClass('hover-cla');
+
+                    if (changeUnitIndex == $("#sitePopup li:visible").length) {
+                        $("#sitePopup li:visible").eq(0).addClass('hover-cla');
+                        changeUnitIndex = 0;
+                        $("#sitePopup .company").scrollTop(0)
+                    }
+                    li = $("#sitePopup li:visible").eq(changeUnitIndex);
+                    var boxH = $("#sitePopup .company").height();
+                    var offSetTop = li.position().top;
+                    var liH = li.height();
+                    var scrollTop = $("#sitePopup .company").scrollTop();
+                    if (offSetTop + scrollTop > boxH && offSetTop + scrollTop - boxH + liH > scrollTop) {
+                        $("#sitePopup .company").scrollTop(offSetTop + scrollTop - boxH + liH);
+                    }
+                }
+                break;
+            }
+                // 回车
+            case 13: {
+                //回车切换单位
+                $('#sitePopup .hover-cla').click()
+                break
+            }
+            default:break;
+        }
+        IS_KEYCODE = true
+    }).on('keyup', function (e) {
+        // 如果隐藏不管了
+        if ($('#sitePopup').is(':hidden')) {
+            return
+        }
+        IS_KEYCODE = true
+    })
+
+	$("#sitePopup .close").click(function(){
+	  $("#sitePopup").hide();
+	  $("body").css("overflow","auto")
+	})
+	
+	$("#sitePopup .company").on("click","li",function(){
+		$("#sitePopup").hide();
+		$(this).addClass("active").siblings().removeClass("active");
+	})
+	
+	//  添加邀请码
+    $(".appCode").click(function () {
+        $("#pu-code").fadeIn();
+    });
+	//   邀请码确定
+    $("#pu-code").on("click",".pu-btns .btn-sure",function () {
+		var invitecode=$("#invitecode").val();
+		if(invitecode==null || invitecode==undefined ){
+			invitecode='';
+		}
+        $.ajax({
+            url:'/base/getInviteCode',
+			data:{invitecode:invitecode,_t:new Date()},
+            dataType:'json',
+            type:'post',
+            success:function(data){
+                if(data.status){
+					if(data.flag==1 || data.flag=='1'){
+						if(data.appUrl!=null && data.appUrl!=undefined && data.appUrl!='' && data.appUrl!='null'){
+							$("#pu-course").find(".pu-con img").attr("src",data.appImage);
+							$("#pu-course").find(".pu-con .course-mes h6").text(data.appName);
+							$("#appCode").val(invitecode);
+							$("#appId").val(data.appId);
+							$("#appUrl").val(data.appUrl);
+							$("#appName").val(data.appName);
+							$("#pu-code").fadeOut();
+                        	$("#pu-course").show();
+						}else{
+							$("#pu-code").fadeOut();
+                       		$("#pu-tips").show();
+						}
+					} else if(data.flag==2 || data.flag=='2'){
+                        $("#pu-code").fadeOut();
+                        try {
+                            window.parent.window.setUrl('common',data.url);
+                        }catch(e){
+                            // 有可能父级是他自己，直接新窗口打开
+                            window.open(data.url)
+                        }
+
+                    }else{
+						$("#pu-code").fadeOut();
+						window.open(data.url);
+					}
+                }else{
+					var msg='获取失败';
+					if(data.msg!=null && data.msg!=undefined && data.msg!=''){
+						msg=data.msg;
+					}
+					$("#puTips").find("p").text(msg);
+		            $("#puTips").fadeIn();
+                    setTimeout(function () {
+                        $("#puTips").fadeOut()
+                    },2000)
+				}
+            }
+        })
+    });
+    //   邀请码取消
+    $("#pu-code").on("click",".pu-btns .btn-cancel",function () {
+        $(".popupCon").fadeOut();
+    });
+	//    课程确定
+    $("#pu-course").on("click",".pu-btns .btn-join",function () {
+		var appUrl=$("#appUrl").val();
+		var appCode=$("#appCode").val();
+		var appName=$("#appName").val();
+		var appId=$("#appId").val();
+		if(appId!=null && appId!=undefined && appId!='' &&
+			appCode!=null && appCode!=undefined && appCode!='' &&
+				appUrl!=null && appUrl!=undefined && appUrl!='' ){
+    		$.ajax({
+                url:'/base/setRecentsApp',
+    			data:{appName:appName,appCode:appCode,appId:appId,_t:new Date()},
+                dataType:'json',
+                type:'post',
+                success:function(data){}
+    		})
+            $("#pu-course").fadeOut()
+			window.open(appUrl);
+		}
+    });
+
+	//    课程取消
+    $("#pu-course").on("click",".pu-close",function () {
+		 $("#pu-course").fadeOut()
+	});
+	//  提示取消
+    $("#pu-tips").on("click",".pu-btns .btn-cancel",function () {
+        $("#pu-tips").fadeOut();
+    });
+    //  提示确定
+    $("#pu-tips").on("click",".pu-btns .btn-sure",function () {
+        $(".popupCon").fadeOut();
+    })
+	//session过期提示
+	$(".z-popup-wrap").on("click",".pu-del .pu-btn span",function () {
+		$(".z-popup-wrap").hide();
+		location.reload(true);
+	})
+</script>
+
+<!-- 子页面弹出框全页面覆盖公共方法 -->
+<script>
+	var offsetFlag=0;
+ 	window.onload = function () {
+        // 父页面初始信息
+        var offsetTop = $("#frame_content").offset().top;
+        var offsetLeft = $("#frame_content").offset().left;
+        var iframeH = $(window).height() - $(".header").height();
+        var iframeW = $("#frame_content").width() - offsetLeft;
+       var marObj = {
+            paddingL: offsetLeft,
+            paddingT: offsetTop,
+            paddingR: 0,
+            fullScreen: 1,
+            cmd: 1001,
+            bottom: 0,
+            height: iframeH,
+            left: offsetLeft,
+            right: 0,
+            toggle: true,
+            top: offsetTop,
+            width: iframeW
+        };
+		var marObj1 = {
+                        paddingL: offsetLeft,
+                        paddingT: offsetTop,
+                        paddingR: 0,
+                        fullScreen: 1,
+                        cmd: 1001,
+                        bottom: 0,
+                        height: iframeH,
+                        left: 0,
+                        right: 0,
+                        toggle: true,
+                        top: 0,
+                        width: iframeW
+                    };
+        // 父页面向子页面传递信息
+		document.getElementById('frame_content').contentWindow.postMessage(JSON.stringify(marObj1), "*");
+        // 获取子页面传过来的信息
+        window.addEventListener('message', function (e) {
+	
+            try {
+			var data = JSON.parse(e.data);
+			  if(data.toggle == true || data==""){
+			    if(data.color){
+				  document.getElementById('frame_content').contentWindow.postMessage(JSON.stringify(marObj1), '*');
+				}else{
+				   document.getElementById('frame_content').contentWindow.postMessage(JSON.stringify(marObj), '*');
+				}
+			   
+			  }else{
+			    document.getElementById('frame_content').contentWindow.postMessage(JSON.stringify(marObj1), '*');
+			  }
+
+                if (data!=null && data!=undefined && data.toggle!=null && data.toggle!=undefined && data.toggle == true) {
+                    if(data.color){
+					  
+					  $("#frame_content").css({
+                        position: "fixed",
+                        left: 0,
+                        top: 0,
+                        'z-index': 99999,
+                        width: '100%',
+                        height: '100%',
+                        'padding-left':offsetLeft+'px',
+                        'padding-top':offsetTop+'px',
+                        background:data.color,
+						'box-sizing': 'border-box',
+						'min-width':'1400px'
+                    })
+					}else{
+					  $("#frame_content").css({
+                            position: "fixed",
+                            left: 0,
+                            top: 0,
+                            'z-index': 99999,
+                            width: '100%',
+                            height: '100%', 
+							background:'none',
+                            'box-sizing': 'border-box'
+                        })
+					}
+					
+                } else {
+                    $("#frame_content").css({
+                        position: "initial",
+                        left: 0,
+                        top: 0,
+                        'z-index': 2,
+                        width: iframeW + 'px',
+                        height:'calc(100vh - 80px)',
+                        'padding-left':0,
+                        'padding-top':0,
+
+						'min-width':'100%'
+                    })
+					
+
+                    document.getElementById('frame_content').postMessage(JSON.stringify(marObj1), '*');
+                }
+    			if(data!=null && data!=undefined && data.type!=null && data.type!=undefined && data.type=='notice' ){
+    			}
+            } catch (e) {
+
+            }
+
+        }, false);
+    };
+
+</script>
+<script type="text/javascript">
+    var iframe = document.getElementById("frame_content");
+    iframe.onload = function(){
+		try{
+            iframe.contents().find(".Wrapbody").css("margin","0 auto");
+        	iframe.contents().find(".con-right").css("width","100%");
+        }catch(err){
+        }
+    }
+	function iframeWidthResize(){
+    	if($('.left-con').is(':hidden')){
+        	 var iframeW = $(window).width()-120;
+			 if(iframeW<1060){
+			 	iframeW=1060;
+			 }
+        	$(".right-con .center").css({width:iframeW,background:"#ffffff",overflow:"hidden",margin:"0 60px"})
+            $(".right-con .center").width(iframeW);
+			$("#frame_content").css({width: iframeW});
+    	}else{
+        	var iframeW = $(window).width()-$(".con-left").width()-120;	  
+			 if(iframeW<1060){
+			 	iframeW=1060;
+			 }
+        	$(".right-con .center").css({width:iframeW,background:"#ffffff",overflow:"hidden",margin:"0 60px"})
+            $(".right-con .center").width(iframeW);
+			$("#frame_content").css({width: iframeW});
+        	}
+	};
+	
+    $(window).resize(function () {
+		if(offsetFlag==0){
+    		var iframeH=$(window).height()-$(".space-unit").height()-$(".user-block").height();
+    		$(".left-con .menu").height(iframeH);
+    		setTimeout(function(){
+        		var winH=$(window).height();
+        		/*$("#frame_content").css({
+        			height:winH,
+        			'min-height':"inherit"
+                });*/
+    		},300)
+		}else{
+    		setTimeout(function(){
+        		var winH=$(window).height();
+        		$("#frame_content").css({
+                    position: "fixed",
+                    left: 0,
+                    top: 0,
+                    'z-index': 99999,
+                     width: '100%',
+                     height:winH,
+                     'min-height':"inherit"
+                 });
+    		},300)
+		}
+	});
+	var domain="chaoxing.com";
+	if(domain==null || domain==undefined || domain=="" || domain=="null" ){
+		document.domain ="chaoxing.com";
+	}else{
+		document.domain =domain;
+	}
+		function setTab(id){
+			$("#li_"+id).addClass("activess").siblings().removeClass("activess");
+			frame_content.window.setTab_1(id);
+		}
+
+        var winScroll=$(window.parent.window) ? $(window.parent.window) : $(window);
+        var docScroll=$(window.parent.document) ? $(window.parent.document) : $(document);
+        winScroll.scroll(function(){
+            if (winScroll.scrollTop()+winScroll.height() >= docScroll.height()-5) {
+                try{
+                    document.getElementById('frame_content').contentWindow.loading(); 
+                }catch(err){
+                    return false;
+                }
+            }
+        });
+        
+        function reloadImg(){
+            $(".head-img").attr("src",$(".head-img").attr("src")+"?t="+Math.random());
+            $(".icon-head").attr("src",$(".icon-head").attr("src")+"?t="+Math.random());
+        }
+		
+        var iframe=document.getElementById("frame_content");
+		
+		
+function setScheduledTask(hour, minute, callTask) { 
+    let taskTime = new Date(); 
+    taskTime.setHours(hour); 
+    taskTime.setMinutes(minute); 
+    let timeDiff = taskTime.getTime() - (new Date()).getTime(); // 获取时间差
+    timeDiff = timeDiff > 0 ? timeDiff : (timeDiff + 24 * 60 * 60 * 1000); 
+    setTimeout(function() { 
+		callTask(6); // 首次执行
+        setInterval(function () {
+            callTask(6); // 传递参数给callTask函数
+        }, 24 * 60 * 60 * 1000); // 24小时为循环周期
+    }, timeDiff);
+}
+setScheduledTask(3, 0, logout);
+
+
+
+</script>
+
+<script type="text/javascript" src="https://robot.chaoxing.com/sdk/CxRobotSdkJs.js"></script>
+<script>
+    try {
+        var robotType = '0';
+        if(robotType == 1){
+            CxRobotSdkJs.init("https://robot."+domain+"/embedChat?unitId="+siteFid+"&robotId="+''+"&groupId=0", ""+''+"");
+        }else if(robotType == 2){
+            CxRobotSdkJs.init("https://robot."+domain+"/embedChat?unitId="+siteFid+"&robotId="+''+"&groupId=0&openType=openUrl", ""+''+"");
+        }else if(robotType == 3){
+            CxRobotSdkJs.init("https://robot."+domain+"/embedChat?unitId="+siteFid+"&robotId="+''+"&groupId=0&openType=openUrl&openPage=digital", ""+''+"");
+        }else if(robotType == 4){
+            CxRobotSdkJs.init("https://robot."+domain+"/embedChat?unitId="+siteFid+"&robotId="+''+"&groupId=0&openType=openUrl&openPage=coze", ""+''+"");
+        }
+    } catch (e) {
+        console.error("加载报错",e)
+    }
+    // 初始化智慧学伴
+    function openStudyPartner() {
+        console.log('初始化智慧学伴');
+        window.initStudyPartner({
+            vadOrigin: "https://futurelearning."+domain+"/api",
+        });
+    }
+</script>
+<script type="module" src="https://futurelearning.chaoxing.com/futureStudy/js/studyPartner/index.js" onload="openStudyPartner()"></script>
+<script>
+    function changeMenuName(name,url, title) {
+        if (!title) {
+            return
+        }
+        $(`div[role='menuitem'][name='${ name }'][dataurl*='${ url }'] h3`).attr('title',title).text(title)
+    }
+
+    changeMenuName('云阅读','/login/rss',`云阅读`)
+    changeMenuName('报纸','/login/paper',`报纸`)
+    changeMenuName('作者文库','?chaoxingapp=true&target=blank',`作者文库`)
+    changeMenuName('参考咨询','/myfirst.do',`参考咨询`)
+    changeMenuName('论文检测','/passport/login',`论文检测`)
+    changeMenuName('微课','/microcourse/study',`微课`)
+    changeMenuName('调查问卷','/login/index?type=1',`调查问卷`)
+    changeMenuName('云盘','/pcuserpan/index',`云盘`)
+    changeMenuName('小组','/pc/circle/circleIndex',`小组`)
+    changeMenuName('收件箱','/pc/notice/myNotice',`收件箱`)
+    changeMenuName('专题创作','/subject_creation/SubjectCreationController/subjectCreationIndex?version=3.0',`专题创作`)
+    changeMenuName('通讯录','/pc/contacts/home',`通讯录`)
+    changeMenuName('首页','/visit/interaction',`首页`)
+    changeMenuName('笔记','/pc/activity/activityList',`笔记`)
+    changeMenuName('课程','/visit/interaction',`课程`)
+    changeMenuName('个人直播间','/courseLive/personLiveRoomManager',`个人直播间`)
+    changeMenuName('大雅AIGC检测','/passport/login?ut=aigc',`大雅AIGC检测`)
+    changeMenuName('论文查重','/passport/login',`论文查重`)
+    changeMenuName('常用','/base/indexNew',`常用`)
+    changeMenuName('首页','/res/pc/curriculum/schedule.html',`首页`)
+    changeMenuName('消息','/webim/me',`消息`)
+    changeMenuName('应用中心','/base/app',`应用中心`)
+    changeMenuName('大雅相似度检测','/passport/login',`大雅相似度检测`)
+</script>
+</body>
+</html>

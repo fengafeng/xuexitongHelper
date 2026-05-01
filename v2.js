@@ -1,3 +1,13 @@
+/*
+ * 学习通自动学习脚本 - xuexitongScript
+ * Copyright (c) 2026 suifeng
+ * 
+ * 作者: suifeng
+ * 项目地址: https://github.com/fengafeng/xuexitongScript
+ * 
+ * 本脚本仅供学习交流使用，禁止商业用途。
+ * 使用请遵守相关平台规定，使用者需自行承担使用风险。
+ */
 (function () {
     // 检查页面是否已加载jQuery，如果没有则加载
     if (typeof window.jQuery === 'undefined') {

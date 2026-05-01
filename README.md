@@ -19,6 +19,19 @@
 - [test_serverchan_push.py](/E:/code/xuexitongScript-master/test_serverchan_push.py)
   独立的 Server酱推送调试脚本
 
+---
+
+## 版权信息
+
+**学习通自动学习脚本 - xuexitongScript**
+
+- 作者: suifeng
+- 项目地址: https://github.com/fengafeng/xuexitongScript
+- Copyright &copy; 2026 suifeng
+
+本脚本仅供学习交流使用，禁止商业用途。
+使用请遵守相关平台规定，使用者需自行承担使用风险。
+
 ## 当前脚本行为
 
 ### 1. 学习目标页
