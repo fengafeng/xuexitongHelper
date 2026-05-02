@@ -408,8 +408,11 @@
             togglePause:function(){
                 this.configs.paused=!this.configs.paused;this._logPhase("播放",this.configs.paused?"⏸️ 已暂停":"▶️ 已恢复");
                 var btn=document.getElementById('fq-pause-btn');if(btn){btn.textContent=this.configs.paused?'▶️ 播放':'⏸️ 暂停';btn.className=this.configs.paused?'fq-pause-btn fq-paused':'fq-pause-btn fq-playing'}
-                if(this.configs.paused){if(this._audioEl){this._audioEl.pause();console.log("%c⏸️ 音频暂停","color:#FF9800")}if(this._videoEl){this._videoEl.pause();console.log("%c⏸️ 视频暂停","color:#FF9800")}this._isPlaying=false}
-                else{this._isPlaying=true;if(this._audioEl){this._audioEl.play()["catch"](function(){});console.log("%c▶️ 音频恢复","color:#4CAF50")}if(this._videoEl){this._videoEl.play()["catch"](function(){});console.log("%c▶️ 视频恢复","color:#4CAF50")}}
+                var target=null,type='';
+                if(this.configs.mediaType==='video'){if(!this._videoEl){var idx=this._videoIframeIndex;if(idx!==undefined&&this._videoIframes&&this._videoIframes.length>0){this._videoEl=this._getVideoElByIndex(idx);this._logPhase("播放-调试","重新获取视频["+idx+"]: "+(this._videoEl?"✅":"❌"))}}target=this._videoEl;type='视频'}
+                else{if(!this._audioEl){this._audioEl=this._getAudioEl();this._logPhase("播放-调试","重新获取音频: "+(this._audioEl?"✅":"❌"))}target=this._audioEl;type='音频'}
+                if(this.configs.paused){if(target){target.pause();this._logPhase("播放","⏸️ "+type+"暂停 "+(target.currentTime||0).toFixed(1)+"s")}else{this._logPhase("播放-调试","⏸️ 无"+type+"元素")}this._isPlaying=false}
+                else{if(target){target.muted=true;target.play()["catch"](function(){});this._logPhase("播放","▶️ "+type+"恢复 "+(target.playbackRate||1)+"x")}else{this._logPhase("播放-调试","▶️ 无"+type+"元素")}this._isPlaying=true}
             },
 
             // ====== 屏幕防休眠 ======
@@ -453,6 +456,9 @@
                     '#fq-control-panel .fq-pause-btn{font-size:14px;padding:6px 20px;border-radius:10px;cursor:pointer;border:1px solid rgba(255,255,255,0.15);transition:all 0.15s;width:100%;text-align:center}'+
                     '#fq-control-panel .fq-pause-btn.fq-playing{background:rgba(76,175,80,0.25);color:#81C784;border-color:rgba(76,175,80,0.4)}'+
                     '#fq-control-panel .fq-pause-btn.fq-paused{background:rgba(255,152,0,0.25);color:#FFB74D;border-color:rgba(255,152,0,0.4)}'+
+                    '#fq-control-panel .fq-log-btn{font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.12);transition:all 0.15s;background:rgba(255,255,255,0.08);color:#ccc;flex:1;text-align:center}'+
+                    '#fq-control-panel .fq-log-btn:hover{background:rgba(255,255,255,0.18);color:#fff}'+
+                    '#fq-control-panel .fq-log-btn.fq-log-active{background:#607D8B;color:#fff;border-color:#607D8B}'+
                     '#fq-control-panel .fq-speed-display{text-align:center;font-size:28px;font-weight:700;color:#4FC3F7;margin-bottom:10px}'+
                     '#fq-control-panel .fq-speed-buttons{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px}'+
                     '#fq-control-panel .fq-speed-buttons button{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:#ccc;padding:4px 10px;border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.15s}'+
@@ -465,13 +471,14 @@
                 document.head.appendChild(st);
                 var p=document.createElement('div');p.id='fq-control-panel';
                 var mt=this.configs.loopMode?'🔁 整课循环':'📋 正常模式',mc=this.configs.loopMode?'fq-mode-active':'fq-mode-normal';
-                p.innerHTML='<div class="fq-header"><span>🎮 V5 控制台</span><span class="fq-close">✕</span></div><div class="fq-mode-row"><span class="fq-mode-label" id="fq-mode-label">'+(this.configs.loopMode?'循环中':'顺序播放')+'</span><span class="fq-mode-toggle '+mc+'" id="fq-mode-toggle">'+mt+'</span></div><div class="fq-pause-row"><span class="fq-pause-btn fq-playing" id="fq-pause-btn">⏸️ 暂停</span></div><div class="fq-speed-display" id="fq-speed-value">'+this.configs.playbackRate+'x</div><div class="fq-speed-buttons" id="fq-speed-buttons"><button data-speed="0.5">0.5x</button><button data-speed="0.75">0.75x</button><button data-speed="1.0" class="active">1.0x</button><button data-speed="1.25">1.25x</button><button data-speed="1.5">1.5x</button><button data-speed="2.0">2.0x</button><button data-speed="3.0">3.0x</button></div><div class="fq-custom-row"><input type="number" id="fq-speed-input" step="0.1" min="0.1" max="16" placeholder="自定义"><button id="fq-speed-apply">设置</button></div>';
+                p.innerHTML='<div class="fq-header"><span>🎮 V5 控制台</span><span class="fq-close">✕</span></div><div class="fq-mode-row"><span class="fq-mode-label" id="fq-mode-label">'+(this.configs.loopMode?'循环中':'顺序播放')+'</span><span class="fq-mode-toggle '+mc+'" id="fq-mode-toggle">'+mt+'</span></div><div class="fq-pause-row"><span class="fq-pause-btn fq-playing" id="fq-pause-btn">⏸️ 暂停</span></div><div style="display:flex;gap:6px;margin-bottom:10px"><span class="fq-log-btn" id="fq-log-toggle">📋 日志</span></div><div class="fq-speed-display" id="fq-speed-value">'+this.configs.playbackRate+'x</div><div class="fq-speed-buttons" id="fq-speed-buttons"><button data-speed="0.5">0.5x</button><button data-speed="0.75">0.75x</button><button data-speed="1.0" class="active">1.0x</button><button data-speed="1.25">1.25x</button><button data-speed="1.5">1.5x</button><button data-speed="2.0">2.0x</button><button data-speed="3.0">3.0x</button></div><div class="fq-custom-row"><input type="number" id="fq-speed-input" step="0.1" min="0.1" max="16" placeholder="自定义"><button id="fq-speed-apply">设置</button></div>';
                 document.body.appendChild(p);
                 var self=this,btns=p.querySelectorAll('.fq-speed-buttons button');
                 btns.forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();var r=parseFloat(b.dataset.speed);self.setPlaybackRate(r);btns.forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelector('#fq-speed-value').textContent=r+'x'})});
                 p.querySelector('#fq-speed-apply').addEventListener('click',function(e){e.stopPropagation();var v=parseFloat(p.querySelector('#fq-speed-input').value);if(!isNaN(v)&&v>=0.1&&v<=16){self.setPlaybackRate(v);p.querySelector('#fq-speed-value').textContent=v+'x';btns.forEach(function(b){b.classList.remove('active')})}});
                 p.querySelector('#fq-mode-toggle').addEventListener('click',function(e){e.stopPropagation();self.toggleLoopMode()});
                 p.querySelector('#fq-pause-btn').addEventListener('click',function(e){e.stopPropagation();self.togglePause()});
+                p.querySelector('#fq-log-toggle').addEventListener('click',function(e){e.stopPropagation();var dbg=document.getElementById('fq-debug-panel'),lb=p.querySelector('#fq-log-toggle');if(dbg){var v=dbg.style.display!=='none';dbg.style.display=v?'none':'flex';lb.className=v?'fq-log-btn':'fq-log-btn fq-log-active';self._logPhase("调试",v?"隐藏日志":"显示日志")}else{self._createDebugPanel();setTimeout(function(){var d2=document.getElementById('fq-debug-panel');if(d2){d2.style.display='flex';lb.className='fq-log-btn fq-log-active'}},100)}});
                 var isD=false,sX,sY,oX,oY;
                 p.querySelector('.fq-header').addEventListener('mousedown',function(e){isD=true;sX=e.clientX;sY=e.clientY;oX=p.offsetLeft;oY=p.offsetTop;p.style.transition='none';e.preventDefault()});
                 document.addEventListener('mousemove',function(e){if(!isD)return;p.style.left=(oX+e.clientX-sX)+'px';p.style.top=(oY+e.clientY-sY)+'px';p.style.bottom='auto';p.style.right='auto'});
@@ -499,6 +506,7 @@
                 document.head.appendChild(st);
                 var panel=document.createElement('div');
                 panel.id='fq-debug-panel';
+                panel.style.display='none';
                 panel.innerHTML='<div class="fq-debug-header"><span>🐛 调试日志 <span style="color:#666;font-size:10px">('+this._logBuffer.length+'条)</span></span><span style="display:flex;gap:6px;align-items:center"><span class="fq-debug-copy" id="fq-debug-copy">📋 复制</span><span class="fq-debug-close" id="fq-debug-close">✕</span></span></div><div class="fq-debug-body" id="fq-debug-body"></div>';
                 document.body.appendChild(panel);
                 var isDrag=false,sx,sy,ox,oy;

@@ -1213,21 +1213,57 @@
             togglePause() {
                 this.configs.paused = !this.configs.paused;
                 this._logPhase("播放", this.configs.paused ? "⏸️ 已暂停（手动）" : "▶️ 已恢复播放");
+
+                // 更新按钮UI
                 const btn = document.getElementById('fq-pause-btn');
                 if (btn) {
                     btn.textContent = this.configs.paused ? '▶️ 播放' : '⏸️ 暂停';
                     btn.className = this.configs.paused ? 'fq-pause-btn fq-paused' : 'fq-pause-btn fq-playing';
                 }
-                // 暂停时实际暂停媒体
+
+                // 尝试重新获取媒体元素（可能初始化时没找到）
+                let target = null;
+                let targetType = '';
+
+                if (this.configs.mediaType === 'video') {
+                    // 视频：尝试获取当前视频元素
+                    if (!this._videoEl) {
+                        const idx = this._videoIframeIndex;
+                        if (idx !== undefined && this._videoIframes && this._videoIframes.length > 0) {
+                            this._videoEl = this._getVideoElByIndex(idx);
+                            this._logPhase("播放-调试", `重新获取视频元素[${idx}]: ${this._videoEl ? '✅ 找到' : '❌ 仍为null'}`);
+                        }
+                    }
+                    target = this._videoEl;
+                    targetType = '视频';
+                } else {
+                    // 音频：尝试重新获取音频元素
+                    if (!this._audioEl) {
+                        this._audioEl = this._getAudioEl();
+                        this._logPhase("播放-调试", `重新获取音频元素: ${this._audioEl ? '✅ 找到' : '❌ 仍为null'}`);
+                    }
+                    target = this._audioEl;
+                    targetType = '音频';
+                }
+
+                // 执行暂停/恢复
                 if (this.configs.paused) {
-                    if (this._audioEl) { this._audioEl.pause(); console.log("%c⏸️ 音频已暂停", "color:#FF9800"); }
-                    if (this._videoEl) { this._videoEl.pause(); console.log("%c⏸️ 视频已暂停", "color:#FF9800"); }
+                    if (target) {
+                        target.pause();
+                        this._logPhase("播放", `⏸️ ${targetType}已暂停 (currentTime: ${target.currentTime?.toFixed(1)}s)`);
+                    } else {
+                        this._logPhase("播放-调试", `⏸️ 暂停: 无可用${targetType}元素`);
+                    }
                     this._isPlaying = false;
                 } else {
-                    // 恢复时尝试继续播放
+                    if (target) {
+                        target.muted = true;
+                        target.play().catch(() => { target.muted = true; target.play().catch((e) => { this._logPhase("播放-错误", `${targetType}恢复失败: ${e.message}`); }); });
+                        this._logPhase("播放", `▶️ ${targetType}已恢复 (playbackRate: ${target.playbackRate}x)`);
+                    } else {
+                        this._logPhase("播放-调试", `▶️ 恢复: 无可用${targetType}元素`);
+                    }
                     this._isPlaying = true;
-                    if (this._audioEl) { this._audioEl.play().catch(() => {}); console.log("%c▶️ 音频已恢复", "color:#4CAF50"); }
-                    if (this._videoEl) { this._videoEl.play().catch(() => {}); console.log("%c▶️ 视频已恢复", "color:#4CAF50"); }
                 }
             },
 
@@ -1321,6 +1357,16 @@
                     #fq-control-panel .fq-pause-btn.fq-paused:hover {
                         background: rgba(255,152,0,0.35);
                     }
+                    #fq-control-panel .fq-log-btn {
+                        font-size: 12px; padding: 4px 10px; border-radius: 8px;
+                        cursor: pointer; border: 1px solid rgba(255,255,255,0.12);
+                        transition: all 0.15s; background: rgba(255,255,255,0.08);
+                        color: #ccc; flex: 1; text-align: center;
+                    }
+                    #fq-control-panel .fq-log-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+                    #fq-control-panel .fq-log-btn.fq-log-active {
+                        background: #607D8B; color: #fff; border-color: #607D8B;
+                    }
                     /* 速度显示 */
                     #fq-control-panel .fq-speed-display {
                         text-align: center; font-size: 28px; font-weight: 700;
@@ -1369,6 +1415,9 @@
                     </div>
                     <div class="fq-pause-row">
                         <span class="fq-pause-btn fq-playing" id="fq-pause-btn">⏸️ 暂停</span>
+                    </div>
+                    <div style="display:flex;gap:6px;margin-bottom:10px">
+                        <span class="fq-log-btn" id="fq-log-toggle">📋 日志</span>
                     </div>
                     <div class="fq-speed-display" id="fq-speed-value">${this.configs.playbackRate}x</div>
                     <div class="fq-speed-buttons" id="fq-speed-buttons">
@@ -1421,6 +1470,26 @@
                 panel.querySelector('#fq-pause-btn').addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.togglePause();
+                });
+
+                // 日志面板开关
+                panel.querySelector('#fq-log-toggle').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const dbg = document.getElementById('fq-debug-panel');
+                    const logBtn = panel.querySelector('#fq-log-toggle');
+                    if (dbg) {
+                        const visible = dbg.style.display !== 'none';
+                        dbg.style.display = visible ? 'none' : 'flex';
+                        logBtn.className = visible ? 'fq-log-btn' : 'fq-log-btn fq-log-active';
+                        this._logPhase("调试", visible ? "📋 隐藏日志面板" : "📋 显示日志面板");
+                    } else {
+                        this._logPhase("调试", "📋 日志面板未创建，重新创建");
+                        this._createDebugPanel();
+                        setTimeout(() => {
+                            const d2 = document.getElementById('fq-debug-panel');
+                            if (d2) { d2.style.display = 'flex'; logBtn.className = 'fq-log-btn fq-log-active'; }
+                        }, 100);
+                    }
                 });
 
                 // 拖拽
@@ -1498,6 +1567,7 @@
 
                 const panel = document.createElement('div');
                 panel.id = 'fq-debug-panel';
+                panel.style.display = 'none'; // 默认隐藏
                 panel.innerHTML = `
                     <div class="fq-debug-header">
                         <span>🐛 调试日志 <span style="color:#666;font-size:10px">(${this._logBuffer.length}条)</span></span>
