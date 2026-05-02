@@ -429,16 +429,27 @@
                 if(this.configs.paused){
                     // Mute+track approach: don't call pause() to avoid page auto-resume
                     this._pausedAt=target?target.currentTime:0;
-                    if(target){target.volume=0;target.muted=true}
+                    if(target){target.volume=0;target.muted=true;if(this._pausedAt>0)target.currentTime=this._pausedAt}
                     var sc=0;
-                    try{var all1=document.querySelectorAll('audio,video');for(var i=0;i<all1.length;i++){var m=all1[i];if(m.volume>0){m.volume=0;m.muted=true;sc++}}}catch(e){}
-                    try{var f1=document.getElementById('iframe');if(f1&&f1.contentDocument){var all2=f1.contentDocument.querySelectorAll('audio,video');for(var i=0;i<all2.length;i++){var m=all2[i];if(m.volume>0){m.volume=0;m.muted=true;sc++}}}}catch(e){}
+                    // silenceAndSeek: top document
+                    try{var all1=document.querySelectorAll('audio,video');for(var i=0;i<all1.length;i++){var m=all1[i];m.volume=0;m.muted=true;if(this._pausedAt>0&&Math.abs(m.currentTime-this._pausedAt)>0.3)m.currentTime=this._pausedAt;sc++}}catch(e){}
+                    // silenceAndSeek: #iframe
+                    try{var f1=document.getElementById('iframe');if(f1&&f1.contentDocument){var all2=f1.contentDocument.querySelectorAll('audio,video');for(var i=0;i<all2.length;i++){var m=all2[i];m.volume=0;m.muted=true;if(this._pausedAt>0&&Math.abs(m.currentTime-this._pausedAt)>0.3)m.currentTime=this._pausedAt;sc++}}}catch(e){}
+                    // silenceAndSeek: #iframe → ans-insertvideo-online iframes
+                    try{var f1=document.getElementById('iframe');if(f1&&f1.contentDocument){var aif=f1.contentDocument.querySelectorAll('iframe.ans-insertvideo-online');for(var j=0;j<aif.length;j++){var d3=aif[j].contentDocument||(aif[j].contentWindow&&aif[j].contentWindow.document);if(d3){var all3=d3.querySelectorAll('audio,video');for(var k=0;k<all3.length;k++){var m=all3[k];m.volume=0;m.muted=true;if(this._pausedAt>0&&Math.abs(m.currentTime-this._pausedAt)>0.3)m.currentTime=this._pausedAt;sc++}}}}}catch(e){}
                     if(this.configs.mediaType==='video'){try{var f2=document.getElementById('iframe');if(f2){var d2=f2.contentDocument||f2.contentWindow?.document;if(d2){var pb=d2.querySelector('.vjs-big-play-button,.vjs-play-control');if(pb)pb.click()}}}catch(e){}}
                     this._logPhase("播放","⏸️ 已冻结 "+sc+" 个元素 (位置 "+(this._pausedAt||0).toFixed(1)+"s)");
                     this._clearCheckInterval();
                     this._isPlaying=false;
                     // Volume guard
-                    if(!this._pauseWatcher){this._pauseWatcher=setInterval(function(){if(!this.configs.paused){clearInterval(this._pauseWatcher);this._pauseWatcher=null;return}try{var a=document.querySelectorAll('audio,video');for(var i=0;i<a.length;i++){var el=a[i];el.volume=0;el.muted=true;if(this._pausedAt>0&&Math.abs(el.currentTime-this._pausedAt)>0.3)el.currentTime=this._pausedAt}}catch(e){}try{var f3=document.getElementById('iframe');if(f3&&f3.contentDocument){var a=f3.contentDocument.querySelectorAll('audio,video');for(var i=0;i<a.length;i++){var el=a[i];el.volume=0;el.muted=true;if(this._pausedAt>0&&Math.abs(el.currentTime-this._pausedAt)>0.3)el.currentTime=this._pausedAt}}}catch(e){}}.bind(this),300)}
+                    if(!this._pauseWatcher){this._pauseWatcher=setInterval(function(){if(!this.configs.paused){clearInterval(this._pauseWatcher);this._pauseWatcher=null;return}
+                        // Direct known elements
+                        if(this._videoEl){this._videoEl.volume=0;this._videoEl.muted=true;if(this._pausedAt>0)this._videoEl.currentTime=this._pausedAt}
+                        if(this._audioEl){this._audioEl.volume=0;this._audioEl.muted=true;if(this._pausedAt>0)this._audioEl.currentTime=this._pausedAt}
+                        // Fallback searches
+                        try{var a=document.querySelectorAll('audio,video');for(var i=0;i<a.length;i++){var el=a[i];el.volume=0;el.muted=true;if(this._pausedAt>0&&Math.abs(el.currentTime-this._pausedAt)>0.3)el.currentTime=this._pausedAt}}catch(e){}
+                        try{var f3=document.getElementById('iframe');if(f3&&f3.contentDocument){var a=f3.contentDocument.querySelectorAll('audio,video');for(var i=0;i<a.length;i++){var el=a[i];el.volume=0;el.muted=true;if(this._pausedAt>0&&Math.abs(el.currentTime-this._pausedAt)>0.3)el.currentTime=this._pausedAt}}}catch(e){}
+                    }.bind(this),300)}
                 }else{
                     if(target){
                         target.volume=1;target.muted=true;
