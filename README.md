@@ -1,4 +1,4 @@
-# 学习通助手 — xuexitongScript
+# 学习通助手 — xuetong-helper
 
 > **版本**: v1.0（正式版）  
 > **作者**: suifeng  
@@ -24,7 +24,7 @@
 ### 方式一：Tampermonkey 安装（推荐）
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展
-2. [点此安装](https://github.com/fengafeng/xuexitongScript/raw/main/xuetong-helper.user.js)（或打开 `xuetong-helper.user.js` 文件，Tampermonkey 会自动识别）
+2. [点此安装](https://github.com/fengafeng/xuetong-helper/raw/main/xuetong-helper.user.js)（或打开 `xuetong-helper.user.js` 文件，Tampermonkey 会自动识别）
 3. 访问学习通课程页面，脚本自动在右下角显示悬浮控制面板
 
 ### 方式二：控制台粘贴

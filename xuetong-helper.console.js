@@ -1,7 +1,7 @@
 /*
  * 学习通助手 v1.0 控制台版
  * Copyright (c) 2026 suifeng
- * 项目地址: https://github.com/fengafeng/xuexitongScript
+ * 项目地址: https://github.com/fengafeng/xuetong-helper
  * 
  * 用法：复制整个脚本，在浏览器控制台（F12 → Console）粘贴执行
  * 
