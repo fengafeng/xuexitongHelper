@@ -1,5 +1,5 @@
 /*
- * 学通助手 v1.0
+ * 学习通助手 v1.0
  * Copyright (c) 2026 suifeng
  * 项目地址: https://github.com/fengafeng/xuexitongScript
  * 
@@ -805,7 +805,7 @@
                 if(window.app&&typeof window.app._tryResumePlayback==="function")window.app._tryResumePlayback("keep-alive")
             },30000);
             console.log("%c═══════════════════════════════════════","color:#4CAF50;font-size:14px");
-            console.log("%c  ✅ 学通助手 v1.0 启动完成","color:#4CAF50;font-size:14px;font-weight:bold");
+            console.log("%c  ✅ 学习通助手 v1.0 启动完成","color:#4CAF50;font-size:14px;font-weight:bold");
             console.log("%c═══════════════════════════════════════","color:#4CAF50;font-size:14px");
         } catch(error) { console.error("V5启动失败:",error); }
     }

@@ -1,8 +1,8 @@
-# 学通助手 — xuexitongScript
+# 学习通助手 — xuexitongScript
 
 > **版本**: v1.0（正式版）  
 > **作者**: suifeng  
-> **项目地址**: https://github.com/fengafeng/xuexitongScript  
+> **项目地址**: https://github.com/fengafeng/xuetong-helper  
 > **Copyright © 2026 suifeng**  
 > 本脚本仅供学习交流使用，禁止商业用途。使用请遵守相关平台规定，使用者需自行承担使用风险。
 
@@ -97,15 +97,6 @@
 | `xuetong-helper.user.js` | ⭐ Tampermonkey 安装版（推荐） |
 | `xuetong-helper.js` | JavaScript 引用版 |
 | `xuetong-helper.console.js` | F12 控制台粘贴版 |
-| `xuetong-helper.audio.user.js` | 纯音频版（Tampermonkey，开发参考） |
-| `xuetong-helper.audio.js` | 纯音频版（引用，开发参考） |
-| `xuetong-helper.audio.console.js` | 纯音频版（控制台，开发参考） |
-
-### 文档
-
-| 文件 | 用途 |
-|------|------|
-| `README.md` | 本文件：使用说明 + 开发文档 |
 
 ### 三个版本的关系
 
@@ -117,13 +108,19 @@ xuetong-helper.user.js  (完整注释版)
           xuetong-helper.console.js  (控制台粘贴版)
 ```
 
+### 文档
+
+| 文件 | 用途 |
+|------|------|
+| `README.md` | 本文件：使用说明 + 开发文档 |
+
 ---
 
 ## 📜 版本沿革
 
 | 版本 | 代号 | 说明 |
 |------|------|------|
-| **v1.0** | 学通助手 | **当前版本**。音视频混合、悬浮面板、整课循环、章节列表自动化、屏幕防休眠、暂停守卫 |
+| **v1.0** | 学习通助手 | **当前版本**。音视频混合、悬浮面板、整课循环、章节列表自动化、屏幕防休眠、暂停守卫 |
 | **v0.5** | V5（内部版） | 自动检测音频/视频、三层iframe穿透、暂停/播放按钮、调试日志面板 |
 | **v0.4** | V4（音频版） | 纯音频播放、悬浮速度面板、多音频支持 |
 | **v0.3** | V3（音频增强） | 智能iframe检测、增强的音频查找策略、全自动化流程 |
@@ -301,8 +298,5 @@ xuetong-helper/
 ├── xuetong-helper.user.js         ⭐ 主脚本 - Tampermonkey版
 ├── xuetong-helper.js              主脚本 - JS引用版
 ├── xuetong-helper.console.js      主脚本 - 控制台版
-├── xuetong-helper.audio.user.js   纯音频版 - Tampermonkey版
-├── xuetong-helper.audio.js        纯音频版 - 引用版
-├── xuetong-helper.audio.console.js 纯音频版 - 控制台版
 └── README.md                      本文件
 ```

@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         学通助手
+// @name         学习通助手
 // @namespace    local.codex.xuetong-helper
 // @version      1.0.0
 // @description  自动完成学习通课程任务点：音视频自动播放、自动翻页、悬浮控制面板、整课循环
@@ -10,9 +10,9 @@
 // ==/UserScript==
 
 /*
- * 学通助手 v1.0（原 V5）
+ * 学习通助手 v1.0（原 V5）
  * Copyright (c) 2026 suifeng
- * 项目地址: https://github.com/fengafeng/xuexitongScript
+ * 项目地址: https://github.com/fengafeng/xuetong-helper
  * 
  * 本脚本仅供学习交流使用，禁止商业用途。
  * 使用请遵守相关平台规定，使用者需自行承担使用风险。
@@ -114,7 +114,7 @@
             /* ==================== 启动入口 ==================== */
 
             run() {
-                this._logPhase("启动", `学通助手 v1.0 - ${location.href.substring(0,80)}`);
+                this._logPhase("启动", `学习通助手 v1.0 - ${location.href.substring(0,80)}`);
                 const pageType = this._detectPageType();
                 const inTop = window.self === window.top;
                 this._logPhase("诊断", `页面类型: ${pageType}, 顶层: ${inTop}, iframes: ${document.querySelectorAll('iframe').length}, #iframe: ${!!document.getElementById('iframe')}`);
@@ -1520,7 +1520,7 @@
                 const modeStatus = this.configs.loopMode ? '循环中' : '顺序播放';
                 panel.innerHTML = `
                     <div class="fq-header">
-                        <span>🎮 学通助手</span>
+                        <span>🎮 学习通助手</span>
                         <span class="fq-close">✕</span>
                     </div>
                     <div class="fq-mode-row">
@@ -1632,7 +1632,7 @@
                 });
                 panel.addEventListener('click', () => { panel.style.opacity = '1'; });
 
-                console.log("%c✓ 学通助手控制面板已创建", "color:#4CAF50;font-weight:bold");
+                console.log("%c✓ 学习通助手控制面板已创建", "color:#4CAF50;font-weight:bold");
             },
 
             // ====== 调试日志面板（临时，正式版删除） ======
@@ -1772,10 +1772,10 @@
             },30000);
 
             console.log("%c═══════════════════════════════════════", "color:#4CAF50;font-size:14px");
-            console.log("%c  ✅ 学通助手 v1.0 启动完成", "color:#4CAF50;font-size:14px;font-weight:bold");
+            console.log("%c  ✅ 学习通助手 v1.0 启动完成", "color:#4CAF50;font-size:14px;font-weight:bold");
             console.log("%c═══════════════════════════════════════", "color:#4CAF50;font-size:14px");
         } catch (error) {
-            console.error("学通助手启动失败:", error);
+            console.error("学习通助手启动失败:", error);
         }
     }
 })();
