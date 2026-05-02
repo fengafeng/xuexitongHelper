@@ -1,5 +1,5 @@
 /*
- * 学习通助手v5 - 音视频混合版
+ * 学通助手 v1.0
  * Copyright (c) 2026 suifeng
  * 项目地址: https://github.com/fengafeng/xuexitongScript
  * 
@@ -87,26 +87,26 @@
             get cellData() { return this._cellData; },
 
             run() {
-                this._logPhase("V5 启动", `音视频混合版 - ${location.href.substring(0,80)}`);
+                this._logPhase("启动", `音视频混合版 - ${location.href.substring(0,80)}`);
                 const pageType=this._detectPageType();
                 const inTop=window.self===window.top;
-                this._logPhase("V5 诊断",`页面类型: ${pageType}, 顶层: ${inTop}, iframes: ${document.querySelectorAll('iframe').length}, #iframe: ${!!document.getElementById('iframe')}`);
-                if (pageType==='course_list') { this._logPhase("V5 启动","课程列表页跳过"); return; }
-                if (pageType==='chapter_list') { this._logPhase("V5 启动","章节列表→自动进入"); if(inTop){this._createControlPanel();this._createDebugPanel()} this._runChapterListAuto(); return; }
+                this._logPhase("诊断",`页面类型: ${pageType}, 顶层: ${inTop}, iframes: ${document.querySelectorAll('iframe').length}, #iframe: ${!!document.getElementById('iframe')}`);
+                if (pageType==='course_list') { this._logPhase("启动","课程列表页跳过"); return; }
+                if (pageType==='chapter_list') { this._logPhase("启动","章节列表→自动进入"); if(inTop){this._createControlPanel();this._createDebugPanel()} this._runChapterListAuto(); return; }
                 if (inTop) { this._createControlPanel(); this._createDebugPanel(); this._requestWakeLock(); }
                 this._delayedMediaDetect(0);
             },
             _delayedMediaDetect(attempt=0) {
                 this._detectMediaType();
-                this._logPhase("V5 启动",`媒体类型: ${this.configs.mediaType} (尝试 ${attempt+1})`);
+                this._logPhase("启动",`媒体类型: ${this.configs.mediaType} (尝试 ${attempt+1})`);
                 if (this.configs.mediaType==='unknown'&&attempt<10) {
-                    this._logPhase("V5 启动",`媒体未就绪，2秒后重试 (${attempt+1}/10)`);
+                    this._logPhase("启动",`媒体未就绪，2秒后重试 (${attempt+1}/10)`);
                     setTimeout(()=>this._delayedMediaDetect(attempt+1),2000);
                     return;
                 }
                 if (this.configs.mediaType==='video') { this._runContentPageVideo(); }
                 else if (this.configs.mediaType==='audio') { this._runContentPageAudio(); }
-                else { this._logPhase("V5 启动","10次后仍未知，走音频兜底"); this._runContentPageAudio(); }
+                else { this._logPhase("启动","10次后仍未知，走音频兜底"); this._runContentPageAudio(); }
             },
 
             _detectPageType() {
@@ -805,7 +805,7 @@
                 if(window.app&&typeof window.app._tryResumePlayback==="function")window.app._tryResumePlayback("keep-alive")
             },30000);
             console.log("%c═══════════════════════════════════════","color:#4CAF50;font-size:14px");
-            console.log("%c  ✅ V5 音视频混合脚本启动完成","color:#4CAF50;font-size:14px;font-weight:bold");
+            console.log("%c  ✅ 学通助手 v1.0 启动完成","color:#4CAF50;font-size:14px;font-weight:bold");
             console.log("%c═══════════════════════════════════════","color:#4CAF50;font-size:14px");
         } catch(error) { console.error("V5启动失败:",error); }
     }

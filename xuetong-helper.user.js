@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         学习通助手v5
-// @namespace    local.codex.xuexitong.av5
+// @name         学通助手
+// @namespace    local.codex.xuetong-helper
 // @version      1.0.0
-// @description  自动识别音频/视频页面 → 播放 → 下一节；支持悬浮速度面板 + 整课循环模式
+// @description  自动完成学习通课程任务点：音视频自动播放、自动翻页、悬浮控制面板、整课循环
 // @author       suifeng
 // @match        *://*.chaoxing.com/*
 // @run-at       document-idle
@@ -10,19 +10,20 @@
 // ==/UserScript==
 
 /*
- * 学习通自动学习脚本 - xuexitongScript / V5 音视频混合版
+ * 学通助手 v1.0（原 V5）
  * Copyright (c) 2026 suifeng
  * 项目地址: https://github.com/fengafeng/xuexitongScript
  * 
  * 本脚本仅供学习交流使用，禁止商业用途。
  * 使用请遵守相关平台规定，使用者需自行承担使用风险。
  * 
- * V5 新增功能:
- *   - 自动检测页面是音频还是视频
- *   - 音频 → 沿用 V4 音频逻辑
- *   - 视频 → 基于 V3 视频逻辑的播放控制
- *   - 整课循环模式（全课程播完自动重头开始）
- *   - 悬浮面板增加播放模式切换
+ * 功能:
+ *   - 自动检测音频/视频 → 播放 → 自动翻页
+ *   - 悬浮控制面板（速度调节 + 暂停/播放 + 模式切换）
+ *   - 整课循环 / 正常播放模式切换
+ *   - 章节测验自动跳过
+ *   - 章节列表自动进入未完成章节
+ *   - 屏幕防休眠
  */
 
 (function () {
@@ -113,20 +114,20 @@
             /* ==================== 启动入口 ==================== */
 
             run() {
-                this._logPhase("V5 启动", `音视频混合版 - ${location.href.substring(0,80)}`);
+                this._logPhase("启动", `学通助手 v1.0 - ${location.href.substring(0,80)}`);
                 const pageType = this._detectPageType();
                 const inTop = window.self === window.top;
-                this._logPhase("V5 诊断", `页面类型: ${pageType}, 顶层: ${inTop}, iframes: ${document.querySelectorAll('iframe').length}, #iframe: ${!!document.getElementById('iframe')}`);
+                this._logPhase("诊断", `页面类型: ${pageType}, 顶层: ${inTop}, iframes: ${document.querySelectorAll('iframe').length}, #iframe: ${!!document.getElementById('iframe')}`);
                 
                 // 课程列表页 → 跳过
                 if (pageType === 'course_list') {
-                    this._logPhase("V5 启动", "课程列表页，跳过");
+                    this._logPhase("启动", "课程列表页，跳过");
                     return;
                 }
                 
                 // 章节列表页 → 自动检测并进入未完成章节
                 if (pageType === 'chapter_list') {
-                    this._logPhase("V5 启动", "章节列表页 → 启动章节检测");
+                    this._logPhase("启动", "章节列表页 → 启动章节检测");
                     if (inTop) { this._createControlPanel(); this._createDebugPanel(); }
                     this._runChapterListAuto();
                     return;
@@ -144,9 +145,9 @@
 
             _delayedMediaDetect(attempt = 0) {
                 this._detectMediaType();
-                this._logPhase("V5 启动", `媒体类型: ${this.configs.mediaType} (尝试 ${attempt + 1})`);
+                this._logPhase("启动", `媒体类型: ${this.configs.mediaType} (尝试 ${attempt + 1})`);
                 if (this.configs.mediaType === 'unknown' && attempt < 10) {
-                    this._logPhase("V5 启动", `媒体未就绪，2秒后重试 (${attempt + 1}/10)`);
+                    this._logPhase("启动", `媒体未就绪，2秒后重试 (${attempt + 1}/10)`);
                     setTimeout(() => this._delayedMediaDetect(attempt + 1), 2000);
                     return;
                 }
@@ -155,7 +156,7 @@
                 } else if (this.configs.mediaType === 'audio') {
                     this._runContentPageAudio();
                 } else {
-                    this._logPhase("V5 启动", "10次重试后仍未知，走音频兜底");
+                    this._logPhase("启动", "10次重试后仍未知，走音频兜底");
                     this._runContentPageAudio();
                 }
             },
@@ -1519,7 +1520,7 @@
                 const modeStatus = this.configs.loopMode ? '循环中' : '顺序播放';
                 panel.innerHTML = `
                     <div class="fq-header">
-                        <span>🎮 V5 控制面板</span>
+                        <span>🎮 学通助手</span>
                         <span class="fq-close">✕</span>
                     </div>
                     <div class="fq-mode-row">
@@ -1631,7 +1632,7 @@
                 });
                 panel.addEventListener('click', () => { panel.style.opacity = '1'; });
 
-                console.log("%c✓ V5 控制面板已创建 (音视频混合 + 整课循环)", "color:#4CAF50;font-weight:bold");
+                console.log("%c✓ 学通助手控制面板已创建", "color:#4CAF50;font-weight:bold");
             },
 
             // ====== 调试日志面板（临时，正式版删除） ======
@@ -1771,10 +1772,10 @@
             },30000);
 
             console.log("%c═══════════════════════════════════════", "color:#4CAF50;font-size:14px");
-            console.log("%c  ✅ V5 音视频混合脚本启动完成", "color:#4CAF50;font-size:14px;font-weight:bold");
+            console.log("%c  ✅ 学通助手 v1.0 启动完成", "color:#4CAF50;font-size:14px;font-weight:bold");
             console.log("%c═══════════════════════════════════════", "color:#4CAF50;font-size:14px");
         } catch (error) {
-            console.error("V5脚本启动失败:", error);
+            console.error("学通助手启动失败:", error);
         }
     }
 })();

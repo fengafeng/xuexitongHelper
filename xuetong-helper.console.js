@@ -1,5 +1,5 @@
 /*
- * 学习通自动学习脚本 - xuexitongScript / V5 控制台版
+ * 学通助手 v1.0 控制台版
  * Copyright (c) 2026 suifeng
  * 项目地址: https://github.com/fengafeng/xuexitongScript
  * 
@@ -24,25 +24,25 @@
             _cellData:{cells:0,nCells:0,currentCellIndex:0,currentNCellIndex:0,currentTitle:''},
 
             run:function(){
-                this._logPhase("学习通助手v5","控制台版 - URL: "+location.href.substring(0,80));
+                this._logPhase("学通助手","控制台版 - URL: "+location.href.substring(0,80));
                 var inTop=window.self===window.top;
                 var pt=this._detectPageType();
                 this._logPhase("V5诊断","页面类型: "+pt+", 顶层: "+inTop+", iframes: "+document.querySelectorAll('iframe').length+", #iframe: "+!!document.getElementById('iframe'));
-                if(pt==='course_list'){this._logPhase("V5","课程列表页跳过");return}
-                if(pt==='chapter_list'){this._logPhase("V5","章节列表→自动进入");if(inTop){this._createControlPanel();this._createDebugPanel()}this._runChapterListAuto();return}
+                if(pt==='course_list'){this._logPhase("学通助手","课程列表页跳过");return}
+                if(pt==='chapter_list'){this._logPhase("学通助手","章节列表→自动进入");if(inTop){this._createControlPanel();this._createDebugPanel()}this._runChapterListAuto();return}
                 if(inTop){this._createControlPanel();this._createDebugPanel();this._requestWakeLock()}
                 var self=this;
                 var doDetect=function(attempt){
                     self._detectMediaType();
-                    self._logPhase("V5","媒体类型: "+self.configs.mediaType+" (尝试"+(attempt+1)+")");
+                    self._logPhase("学通助手","媒体类型: "+self.configs.mediaType+" (尝试"+(attempt+1)+")");
                     if(self.configs.mediaType==='unknown'&&attempt<10){
-                        self._logPhase("V5","媒体未就绪，2秒后重试("+(attempt+1)+"/10)");
+                        self._logPhase("学通助手","媒体未就绪，2秒后重试("+(attempt+1)+"/10)");
                         setTimeout(function(){doDetect(attempt+1)},2000);
                         return;
                     }
                     if(self.configs.mediaType==='video'){self._runContentPageVideo()}
                     else if(self.configs.mediaType==='audio'){self._runContentPageAudio()}
-                    else{self._logPhase("V5","重试10次后仍未知，走音频兜底");self._runContentPageAudio()}
+                    else{self._logPhase("学通助手","重试10次后仍未知，走音频兜底");self._runContentPageAudio()}
                 };
                 setTimeout(function(){doDetect(0)},500)
             },
@@ -534,7 +534,7 @@
                 document.addEventListener('mouseup',function(){if(!isD)return;isD=false;p.style.transition=''});
                 p.querySelector('.fq-close').addEventListener('click',function(e){e.stopPropagation();p.style.opacity='0.3'});
                 p.addEventListener('click',function(){p.style.opacity='1'});
-                console.log("%c✓ V5 控制台版 - 面板已创建","color:#4CAF50;font-weight:bold");
+                console.log("%c✓ 学通助手 - 面板已创建","color:#4CAF50;font-weight:bold");
             },
 
             // ====== 调试日志面板 ======
@@ -606,7 +606,7 @@
                 if(window.app&&typeof window.app._tryResumePlayback==="function")window.app._tryResumePlayback("keep-alive")
             },30000);
             console.log("%c═══════════════════════════════════════","color:#4CAF50;font-size:14px");
-            console.log("%c  ✅ V5 控制台版启动完成","color:#4CAF50;font-size:14px;font-weight:bold");
+            console.log("%c  ✅ 学通助手 v1.0 启动完成","color:#4CAF50;font-size:14px;font-weight:bold");
             console.log("%c═══════════════════════════════════════","color:#4CAF50;font-size:14px");
         }catch(e){console.error("V5启动失败:",e)}
     });
