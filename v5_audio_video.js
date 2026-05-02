@@ -1,5 +1,5 @@
 /*
- * 学习通自动学习脚本 - xuexitongScript / V5 音视频混合版
+ * 学习通助手v5 - 音视频混合版
  * Copyright (c) 2026 suifeng
  * 项目地址: https://github.com/fengafeng/xuexitongScript
  * 
@@ -65,6 +65,7 @@
             _treeContainerEl: null,
             _isPlaying: false,
             _pauseWatcher: null,
+            _pausedAt: 0,
             _nextSectionPending: false,
             _currentRetryCount: 0,
             _checkInterval: null,
@@ -574,36 +575,39 @@
             },
 
             togglePause() {
-                this.configs.paused=!this.configs.paused;
-                this._logPhase("播放",this.configs.paused?"⏸️ 已暂停":"▶️ 已恢复");
-                const btn=document.getElementById('fq-pause-btn');
-                if(btn){btn.textContent=this.configs.paused?'▶️ 播放':'⏸️ 暂停';btn.className=this.configs.paused?'fq-pause-btn fq-paused':'fq-pause-btn fq-playing';}
-                let target=null;let targetType='';
-                if(this.configs.mediaType==='video'){
-                    if(!this._videoEl){const idx=this._videoIframeIndex;if(idx!==undefined&&this._videoIframes&&this._videoIframes.length>0){this._videoEl=this._getVideoElByIndex(idx);this._logPhase("播放-调试","重新获取视频["+idx+"]: "+(this._videoEl?"✅ 找到":"❌ null"))}}
-                    target=this._videoEl;targetType='视频';
-                }else{
-                    if(!this._audioEl){this._audioEl=this._getAudioEl();this._logPhase("播放-调试","重新获取音频: "+(this._audioEl?"✅ 找到":"❌ null"))}
-                    target=this._audioEl;targetType='音频';
-                }
-                if(this.configs.paused){
-                    let paused=0;
-                    if(target){target.pause();target.volume=0;paused++}
-                    try{const all=document.querySelectorAll('audio,video');for(const m of all){if(!m.paused){m.pause();m.volume=0;paused++}}}catch(e){}
-                    try{const f=document.getElementById('iframe');if(f&&f.contentDocument){const all=f.contentDocument.querySelectorAll('audio,video');for(const m of all){if(!m.paused){m.pause();m.volume=0;paused++}}}}catch(e){}
-                    if(this.configs.mediaType==='video'){try{const f=document.getElementById('iframe');if(f){const doc=f.contentDocument||f.contentWindow?.document;if(doc){const btn=doc.querySelector('.vjs-big-play-button,.vjs-play-control');if(btn)btn.click()}}}catch(e){}}
-                    this._logPhase("播放","⏸️ 已暂停 "+paused+" 个媒体元素");
-                    // Stop monitoring + start pause guard (prevents page auto-resume)
-                    this._clearCheckInterval();
-                    if(!this._pauseWatcher){this._pauseWatcher=setInterval(function(){if(!this.configs.paused){clearInterval(this._pauseWatcher);this._pauseWatcher=null;return}try{document.querySelectorAll('audio,video').forEach(function(el){if(!el.paused){el.pause();el.volume=0}})}catch(e){}try{var f=document.getElementById('iframe');if(f&&f.contentDocument){f.contentDocument.querySelectorAll('audio,video').forEach(function(el){if(!el.paused){el.pause();el.volume=0}})}}catch(e){}}.bind(this),300)}
-                    this._isPlaying=false;
-                }else{
-                    if(target){target.volume=1;target.muted=true;target.play()["catch"](function(){target.muted=true;target.play()["catch"](function(e){})});this._logPhase("播放","▶️ "+targetType+"恢复 (rate: "+target.playbackRate+"x)")}else{this._logPhase("播放-调试","▶️ 无"+targetType+"元素")}
-                    this._isPlaying=true;
-                    if(this._pauseWatcher){clearInterval(this._pauseWatcher);this._pauseWatcher=null;}
-                    if(this.configs.mediaType==='video'){this._startVideoMonitoring()}
-                }
-            },
+    this.configs.paused=!this.configs.paused;
+    this._logPhase("播放",this.configs.paused?"⏸️ 已暂停（静音追踪）":"▶️ 已恢复播放");
+    const btn=document.getElementById('fq-pause-btn');
+    if(btn){btn.textContent=this.configs.paused?'▶️ 播放':'⏸️ 暂停';btn.className=this.configs.paused?'fq-pause-btn fq-paused':'fq-pause-btn fq-playing';}
+    let target=null;
+    if(this.configs.mediaType==='video'){if(!this._videoEl){var idx=this._videoIframeIndex;if(idx!==undefined&&this._videoIframes&&this._videoIframes.length>0)this._videoEl=this._getVideoElByIndex(idx)}target=this._videoEl}
+    else{if(!this._audioEl)this._audioEl=this._getAudioEl();target=this._audioEl}
+    if(this.configs.paused){
+        // Mute+track approach: don't call pause() to avoid page auto-resume
+        this._pausedAt=target?target.currentTime:0;
+        if(target){target.volume=0;target.muted=true}
+        var sc=0;
+        try{var all1=document.querySelectorAll('audio,video');for(var i=0;i<all1.length;i++){var m=all1[i];if(m.volume>0){m.volume=0;m.muted=true;sc++}}}catch(e){}
+        try{var f1=document.getElementById('iframe');if(f1&&f1.contentDocument){var all2=f1.contentDocument.querySelectorAll('audio,video');for(var i=0;i<all2.length;i++){var m=all2[i];if(m.volume>0){m.volume=0;m.muted=true;sc++}}}}catch(e){}
+        if(this.configs.mediaType==='video'){try{var f2=document.getElementById('iframe');if(f2){var d2=f2.contentDocument||f2.contentWindow?.document;if(d2){var pb=d2.querySelector('.vjs-big-play-button,.vjs-play-control');if(pb)pb.click()}}}catch(e){}}
+        this._logPhase("播放","⏸️ 已静音 "+sc+" 个元素 (pos: "+(this._pausedAt||0).toFixed(1)+"s)");
+        this._clearCheckInterval();
+        this._isPlaying=false;
+        // Volume guard
+        if(!this._pauseWatcher){this._pauseWatcher=setInterval(function(){if(!this.configs.paused){clearInterval(this._pauseWatcher);this._pauseWatcher=null;return}try{document.querySelectorAll('audio,video').forEach(function(e){if(e.volume>0){e.volume=0;e.muted=true}})}catch(e){}try{var f3=document.getElementById('iframe');if(f3&&f3.contentDocument){f3.contentDocument.querySelectorAll('audio,video').forEach(function(e){if(e.volume>0){e.volume=0;e.muted=true}})}}catch(e){}}.bind(this),500)}
+    }else{
+        if(target){
+            target.volume=1;target.muted=true;
+            if(this._pausedAt>0&&Math.abs(target.currentTime-this._pausedAt)>0.5){target.currentTime=this._pausedAt}
+            target.play()["catch"](function(){target.muted=true;target.play()["catch"](function(e){})});
+            if(this.configs.mediaType==='video')this._startVideoMonitoring();
+            this._logPhase("播放","▶️ 已恢复 (rate: "+target.playbackRate+"x, pos: "+(this._pausedAt||0).toFixed(1)+"s)")
+        }else{this._logPhase("播放-调试","▶️ 无媒体元素")}
+        this._pausedAt=0;
+        if(this._pauseWatcher){clearInterval(this._pauseWatcher);this._pauseWatcher=null}
+        this._isPlaying=true;
+    }
+},
 
             _requestWakeLock() {
                 if(this._wakeLock)return;

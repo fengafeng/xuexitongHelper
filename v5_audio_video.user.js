@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         学习通音视频自动播放 V5（音视频混合 + 整课循环）
+// @name         学习通助手v5
 // @namespace    local.codex.xuexitong.av5
 // @version      1.0.0
 // @description  自动识别音频/视频页面 → 播放 → 下一节；支持悬浮速度面板 + 整课循环模式
@@ -87,6 +87,7 @@
             _treeContainerEl: null,
             _isPlaying: false,
             _pauseWatcher: null,  // 暂停守卫定时器
+            _pausedAt: 0,         // 暂停时保存的 currentTime
             _nextSectionPending: false,
             _currentRetryCount: 0,
             _checkInterval: null,
@@ -1231,7 +1232,7 @@
 
             togglePause() {
                 this.configs.paused = !this.configs.paused;
-                this._logPhase("播放", this.configs.paused ? "⏸️ 已暂停（手动）" : "▶️ 已恢复播放");
+                this._logPhase("播放", this.configs.paused ? "⏸️ 已暂停（静音追踪）" : "▶️ 已恢复播放");
 
                 // 更新按钮UI
                 const btn = document.getElementById('fq-pause-btn');
@@ -1240,82 +1241,118 @@
                     btn.className = this.configs.paused ? 'fq-pause-btn fq-paused' : 'fq-pause-btn fq-playing';
                 }
 
-                // 尝试重新获取媒体元素（可能初始化时没找到）
+                // 获取当前媒体元素
                 let target = null;
-                let targetType = '';
-
                 if (this.configs.mediaType === 'video') {
-                    // 视频：尝试获取当前视频元素
                     if (!this._videoEl) {
                         const idx = this._videoIframeIndex;
                         if (idx !== undefined && this._videoIframes && this._videoIframes.length > 0) {
                             this._videoEl = this._getVideoElByIndex(idx);
-                            this._logPhase("播放-调试", `重新获取视频元素[${idx}]: ${this._videoEl ? '✅ 找到' : '❌ 仍为null'}`);
                         }
                     }
                     target = this._videoEl;
-                    targetType = '视频';
                 } else {
-                    // 音频：尝试重新获取音频元素
                     if (!this._audioEl) {
                         this._audioEl = this._getAudioEl();
-                        this._logPhase("播放-调试", `重新获取音频元素: ${this._audioEl ? '✅ 找到' : '❌ 仍为null'}`);
                     }
                     target = this._audioEl;
-                    targetType = '音频';
                 }
 
-                // 执行暂停/恢复
                 if (this.configs.paused) {
-                    // 暂停时：暂停所有能找到的 audio/video 元素（可能有多个）
-                    let pausedCount = 0;
-                    if (target) { target.pause(); target.volume = 0; pausedCount++; }
-                    // 额外兜底：暂停顶层页面 + #iframe内 的所有 audio 和 video
-                    const pauseAllMedia = (root) => {
+                    // === 暂停：静音+追踪，不调 pause() ===
+                    // 不调 pause() 的目的是防止页面JS检测到暂停后自动恢复
+
+                    // 1) 记下当前位置
+                    this._pausedAt = target ? target.currentTime : 0;
+                    if (target) {
+                        target.volume = 0;
+                        target.muted = true;
+                        // 不调 pause()！让页面以为还在播放
+                    }
+
+                    // 2) 暂停兜底：停所有 audio/video 确保没声音
+                    let silencedCount = 0;
+                    const silenceAll = (root) => {
                         if (!root) return;
-                        const all = root.querySelectorAll('audio, video');
-                        for (const m of all) { if (!m.paused) { m.pause(); m.volume = 0; pausedCount++; } }
+                        const all = root.querySelectorAll('audio,video');
+                        for (const m of all) { if (m.volume > 0) { m.volume = 0; m.muted = true; silencedCount++; } }
                     };
-                    try { pauseAllMedia(document); } catch(e) {}
-                    try { const f = document.getElementById('iframe'); if (f && f.contentDocument) pauseAllMedia(f.contentDocument); } catch(e) {}
-                    // 视频：额外尝试点击播放按钮关闭播放（Video.js 可能自动恢复）
+                    try { silenceAll(document); } catch(e) {}
+                    try { const f = document.getElementById('iframe'); if (f && f.contentDocument) silenceAll(f.contentDocument); } catch(e) {}
+                    // 视频额外关闭播放按钮
                     if (this.configs.mediaType === 'video') {
                         try {
                             const f = document.getElementById('iframe');
                             if (f) {
-                                const id = f.contentDocument || f.contentWindow?.document;
-                                if (id) {
-                                    const btn = id.querySelector('.vjs-big-play-button, .vjs-play-control');
-                                    if (btn) btn.click();
+                                const doc = f.contentDocument || f.contentWindow?.document;
+                                if (doc) {
+                                    const pb = doc.querySelector('.vjs-big-play-button,.vjs-play-control');
+                                    if (pb) pb.click();
                                 }
                             }
                         } catch(e) {}
                     }
-                    this._logPhase("播放", `⏸️ 已暂停 ${pausedCount} 个媒体元素`);
-                    // 停止监控 + 启动暂停守卫（防止页面自动恢复）
+
+                    this._logPhase("播放", `⏸️ 已静音 ${silencedCount} 个元素 (追踪位置 ${this._pausedAt.toFixed(1)}s)`);
+
+                    // 3) 清除监控，停止自动推进
                     this._clearCheckInterval();
+                    this._isPlaying = false;
+
+                    // 4) 启动静音守卫：确保音量始终为0
                     if (!this._pauseWatcher) {
                         this._pauseWatcher = setInterval(() => {
-                            if (!this.configs.paused) { clearInterval(this._pauseWatcher); this._pauseWatcher = null; return; }
-                            try { document.querySelectorAll('audio,video').forEach(el => { if (!el.paused) { el.pause(); el.volume = 0; } }); } catch(e) {}
-                            try { const f = document.getElementById('iframe'); if (f && f.contentDocument) { f.contentDocument.querySelectorAll('audio,video').forEach(el => { if (!el.paused) { el.pause(); el.volume = 0; } }); } } catch(e) {}
-                        }, 300);
+                            if (!this.configs.paused) {
+                                clearInterval(this._pauseWatcher);
+                                this._pauseWatcher = null;
+                                return;
+                            }
+                            try {
+                                document.querySelectorAll('audio,video').forEach(el => {
+                                    if (el.volume > 0) { el.volume = 0; el.muted = true; }
+                                });
+                            } catch(e) {}
+                            try {
+                                const f = document.getElementById('iframe');
+                                if (f && f.contentDocument) {
+                                    f.contentDocument.querySelectorAll('audio,video').forEach(el => {
+                                        if (el.volume > 0) { el.volume = 0; el.muted = true; }
+                                    });
+                                }
+                            } catch(e) {}
+                        }, 500);
                     }
-                    this._isPlaying = false;
+
                 } else {
+                    // === 恢复：seek 回到暂停位置 + 恢复音量 ===
                     if (target) {
                         target.volume = 1;
                         target.muted = true;
-                        target.play().catch(() => { target.muted = true; target.play().catch((e) => { this._logPhase("播放-错误", `${targetType}恢复失败: ${e.message}`); }); });
+                        // seek 回到暂停位置
+                        if (this._pausedAt > 0 && Math.abs(target.currentTime - this._pausedAt) > 0.5) {
+                            target.currentTime = this._pausedAt;
+                            this._logPhase("播放-调试", `seek 到 ${this._pausedAt.toFixed(1)}s (当前 ${target.currentTime.toFixed(1)}s)`);
+                        }
+                        target.play().catch(() => {
+                            target.muted = true;
+                            target.play().catch((e) => {
+                                this._logPhase("播放-错误", `恢复失败: ${e.message}`);
+                            });
+                        });
                         // 重启监控
                         if (this.configs.mediaType === 'video') { this._startVideoMonitoring(); }
-                        this._logPhase("播放", `▶️ ${targetType}已恢复 (playbackRate: ${target.playbackRate}x)`);
+                        this._logPhase("播放", `▶️ 已恢复 (playbackRate: ${target.playbackRate}x, position: ${this._pausedAt.toFixed(1)}s)`);
                     } else {
-                        this._logPhase("播放-调试", `▶️ 恢复: 无可用${targetType}元素`);
+                        this._logPhase("播放-调试", "▶️ 恢复: 无可用媒体元素");
+                    }
+
+                    this._pausedAt = 0;
+                    // 清除暂停守卫
+                    if (this._pauseWatcher) {
+                        clearInterval(this._pauseWatcher);
+                        this._pauseWatcher = null;
                     }
                     this._isPlaying = true;
-                    // 清除暂停守卫
-                    if (this._pauseWatcher) { clearInterval(this._pauseWatcher); this._pauseWatcher = null; }
                 }
             },
 
