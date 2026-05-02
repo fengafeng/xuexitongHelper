@@ -1,8 +1,8 @@
-# 学习通助手 — xuetong-helper
+# 学习通助手 — xuexitongHelper
 
 > **版本**: v1.0（正式版）  
 > **作者**: suifeng  
-> **项目地址**: https://github.com/fengafeng/xuetong-helper  
+> **项目地址**: https://github.com/fengafeng/xuexitongHelper  
 > **Copyright © 2026 suifeng**  
 > 本脚本仅供学习交流使用，禁止商业用途。使用请遵守相关平台规定，使用者需自行承担使用风险。
 
@@ -24,14 +24,14 @@
 ### 方式一：Tampermonkey 安装（推荐）
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展
-2. [点此安装](https://github.com/fengafeng/xuetong-helper/raw/main/xuetong-helper.user.js)（或打开 `xuetong-helper.user.js` 文件，Tampermonkey 会自动识别）
+2. [点此安装](https://github.com/fengafeng/xuexitongHelper/raw/main/xuexitongHelper.user.js)（或打开 `xuexitongHelper.user.js` 文件，Tampermonkey 会自动识别）
 3. 访问学习通课程页面，脚本自动在右下角显示悬浮控制面板
 
 ### 方式二：控制台粘贴
 
 1. 打开学习通课程**学习页面**（地址栏包含 `studentstudy`）
 2. 按 `F12` → `Console` 选项卡
-3. 打开 `xuetong-helper.console.js`，全选复制粘贴并回车
+3. 打开 `xuexitongHelper.console.js`，全选复制粘贴并回车
 
 > ⚠️ **注意**：要在**主页面**（`studentstudy`）的 F12 控制台粘贴，不要在视频/音频播放器 iframe 里粘贴。
 
@@ -94,18 +94,18 @@
 
 | 文件 | 用途 |
 |------|------|
-| `xuetong-helper.user.js` | ⭐ Tampermonkey 安装版（推荐） |
-| `xuetong-helper.js` | JavaScript 引用版 |
-| `xuetong-helper.console.js` | F12 控制台粘贴版 |
+| `xuexitongHelper.user.js` | ⭐ Tampermonkey 安装版（推荐） |
+| `xuexitongHelper.js` | JavaScript 引用版 |
+| `xuexitongHelper.console.js` | F12 控制台粘贴版 |
 
 ### 三个版本的关系
 
 ```
-xuetong-helper.user.js  (完整注释版)
+xuexitongHelper.user.js  (完整注释版)
   └─ 去掉 @match 头
-     xuetong-helper.js  (完整逻辑，可引用)
+     xuexitongHelper.js  (完整逻辑，可引用)
        └─ 压缩为 ES5 单行格式
-          xuetong-helper.console.js  (控制台粘贴版)
+          xuexitongHelper.console.js  (控制台粘贴版)
 ```
 
 ### 文档
@@ -255,7 +255,7 @@ run()
 2. 实现核心方法
 3. 在 `run()` 中添加调用或绑定
 4. 同步到三个文件（user.js → .js → console.js）
-5. 验证语法：`node --check xuetong-helper.js`
+5. 验证语法：`node --check xuexitongHelper.js`
 
 ---
 
@@ -294,9 +294,9 @@ run()
 ## 项目文件结构
 
 ```
-xuetong-helper/
-├── xuetong-helper.user.js         ⭐ 主脚本 - Tampermonkey版
-├── xuetong-helper.js              主脚本 - JS引用版
-├── xuetong-helper.console.js      主脚本 - 控制台版
+xuexitongHelper/
+├── xuexitongHelper.user.js         ⭐ 主脚本 - Tampermonkey版
+├── xuexitongHelper.js              主脚本 - JS引用版
+├── xuexitongHelper.console.js      主脚本 - 控制台版
 └── README.md                      本文件
 ```

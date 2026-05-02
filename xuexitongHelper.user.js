@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         学习通助手
-// @namespace    https://github.com/fengafeng/xuetong-helper
+// @namespace    https://github.com/fengafeng/xuexitongHelper
 // @version      1.0.0
 // @description  自动完成学习通课程任务点：音视频自动播放、自动翻页、悬浮控制面板、整课循环
 // @author       suifeng
@@ -12,7 +12,7 @@
 /*
  * 学习通助手 v1.0（原 V5）
  * Copyright (c) 2026 suifeng
- * 项目地址: https://github.com/fengafeng/xuetong-helper
+ * 项目地址: https://github.com/fengafeng/xuexitongHelper
  * 
  * 本脚本仅供学习交流使用，禁止商业用途。
  * 使用请遵守相关平台规定，使用者需自行承担使用风险。

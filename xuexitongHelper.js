@@ -1,7 +1,7 @@
 /*
  * 学习通助手 v1.0
  * Copyright (c) 2026 suifeng
- * 项目地址: https://github.com/fengafeng/xuetong-helper
+ * 项目地址: https://github.com/fengafeng/xuexitongHelper
  * 
  * 本脚本仅供学习交流使用，禁止商业用途。
  * 使用请遵守相关平台规定，使用者需自行承担使用风险。
