@@ -1293,13 +1293,14 @@
                         } catch(e) {}
                     }
 
-                    this._logPhase("播放", `⏸️ 已静音 ${silencedCount} 个元素 (追踪位置 ${this._pausedAt.toFixed(1)}s)`);
+                    this._logPhase("播放", `⏸️ 已冻结 ${silencedCount} 个元素 (位置 ${this._pausedAt.toFixed(1)}s)`);
 
                     // 3) 清除监控，停止自动推进
                     this._clearCheckInterval();
                     this._isPlaying = false;
 
-                    // 4) 启动静音守卫：确保音量始终为0
+                    // 4) 启动守卫：静音 + 不断 seek 回暂停位置（视频/音频视觉冻结）
+                    // 不调 pause() 可避免页面JS自动恢复
                     if (!this._pauseWatcher) {
                         this._pauseWatcher = setInterval(() => {
                             if (!this.configs.paused) {
@@ -1309,18 +1310,24 @@
                             }
                             try {
                                 document.querySelectorAll('audio,video').forEach(el => {
-                                    if (el.volume > 0) { el.volume = 0; el.muted = true; }
+                                    el.volume = 0; el.muted = true;
+                                    if (this._pausedAt > 0 && Math.abs(el.currentTime - this._pausedAt) > 0.3) {
+                                        el.currentTime = this._pausedAt;
+                                    }
                                 });
                             } catch(e) {}
                             try {
                                 const f = document.getElementById('iframe');
                                 if (f && f.contentDocument) {
                                     f.contentDocument.querySelectorAll('audio,video').forEach(el => {
-                                        if (el.volume > 0) { el.volume = 0; el.muted = true; }
+                                        el.volume = 0; el.muted = true;
+                                        if (this._pausedAt > 0 && Math.abs(el.currentTime - this._pausedAt) > 0.3) {
+                                            el.currentTime = this._pausedAt;
+                                        }
                                     });
                                 }
                             } catch(e) {}
-                        }, 500);
+                        }, 300);
                     }
 
                 } else {

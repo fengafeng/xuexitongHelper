@@ -590,11 +590,11 @@
         try{var all1=document.querySelectorAll('audio,video');for(var i=0;i<all1.length;i++){var m=all1[i];if(m.volume>0){m.volume=0;m.muted=true;sc++}}}catch(e){}
         try{var f1=document.getElementById('iframe');if(f1&&f1.contentDocument){var all2=f1.contentDocument.querySelectorAll('audio,video');for(var i=0;i<all2.length;i++){var m=all2[i];if(m.volume>0){m.volume=0;m.muted=true;sc++}}}}catch(e){}
         if(this.configs.mediaType==='video'){try{var f2=document.getElementById('iframe');if(f2){var d2=f2.contentDocument||f2.contentWindow?.document;if(d2){var pb=d2.querySelector('.vjs-big-play-button,.vjs-play-control');if(pb)pb.click()}}}catch(e){}}
-        this._logPhase("播放","⏸️ 已静音 "+sc+" 个元素 (pos: "+(this._pausedAt||0).toFixed(1)+"s)");
+        this._logPhase("播放","⏸️ 已冻结 "+sc+" 个元素 (位置 "+(this._pausedAt||0).toFixed(1)+"s)");
         this._clearCheckInterval();
         this._isPlaying=false;
         // Volume guard
-        if(!this._pauseWatcher){this._pauseWatcher=setInterval(function(){if(!this.configs.paused){clearInterval(this._pauseWatcher);this._pauseWatcher=null;return}try{document.querySelectorAll('audio,video').forEach(function(e){if(e.volume>0){e.volume=0;e.muted=true}})}catch(e){}try{var f3=document.getElementById('iframe');if(f3&&f3.contentDocument){f3.contentDocument.querySelectorAll('audio,video').forEach(function(e){if(e.volume>0){e.volume=0;e.muted=true}})}}catch(e){}}.bind(this),500)}
+        if(!this._pauseWatcher){this._pauseWatcher=setInterval(function(){if(!this.configs.paused){clearInterval(this._pauseWatcher);this._pauseWatcher=null;return}try{document.querySelectorAll('audio,video').forEach(function(el){el.volume=0;el.muted=true;if(this._pausedAt>0&&Math.abs(el.currentTime-this._pausedAt)>0.3)el.currentTime=this._pausedAt}.bind(this))}catch(e){}try{var f3=document.getElementById('iframe');if(f3&&f3.contentDocument){f3.contentDocument.querySelectorAll('audio,video').forEach(function(el){el.volume=0;el.muted=true;if(this._pausedAt>0&&Math.abs(el.currentTime-this._pausedAt)>0.3)el.currentTime=this._pausedAt}.bind(this))}}catch(e){}}.bind(this),300)}
     }else{
         if(target){
             target.volume=1;target.muted=true;
