@@ -16,7 +16,7 @@
     loadJQ(function(){
         window.app={
             _logPhase:function(n,d){console.log('%c【'+n+'】'+(d?' '+d:''),'color:#FF9800;font-weight:bold;font-size:13px')},
-            configs:{playbackRate:1,autoplay:true,mutePageAudio:true,retryInterval:2000,maxRetries:10,audioCheckInterval:1000,videoCheckInterval:1000,guardNoProgressMs:7000,guardResumeCooldownMs:1500,loopMode:false,mediaType:'unknown'},
+            configs:{playbackRate:1,autoplay:true,mutePageAudio:true,retryInterval:2000,maxRetries:10,audioCheckInterval:1000,videoCheckInterval:1000,guardNoProgressMs:7000,guardResumeCooldownMs:1500,loopMode:false,paused:false,mediaType:'unknown'},
             _audioEls:[],_audioIndex:0,_videoEl:null,_treeContainerEl:null,_isPlaying:false,_nextSectionPending:false,_currentRetryCount:0,_checkInterval:null,_stepSwitchPending:false,_stepSwitchAt:0,_tryTimes:0,_skipCount:0,
             _videoIframes:[],_videoIframeIndex:0,_guardLastTime:0,_guardLastWallTs:0,_guardLastResumeTs:0,
             _wakeLock:null,
@@ -46,7 +46,7 @@
                 setTimeout(function(){doDetect(0)},500)
             },
 
-            _detectPageType:function(){var u=window.location.pathname;if(u.includes('/mycourse/studentcourse'))return'course_list';if(u.includes('/mycourse/studentstudy'))return'study_page';if(u.includes('/knowledge/cards'))return'content_page';return'unknown'},
+            _detectPageType:function(){var u=window.location.pathname,ul=window.location.href;if(ul.includes('i.chaoxing.com/base')||u.includes('/studyApp/'))return'course_list';if(u.includes('/mycourse/studentcourse'))return'chapter_list';if(u.includes('/mycourse/studentstudy'))return'study_page';if(u.includes('/knowledge/cards'))return'content_page';return'unknown'},
 
             _runChapterListAuto:function(){
                 this._logPhase("章节列表","检测章节完成状态...");
@@ -280,6 +280,7 @@
             },
 
             _tryResumePlayback:function(src){
+                if(this.configs.paused)return false;
                 if(this.configs.mediaType!=='video'&&this._audioEl){if(this._audioEl.ended){this._clearCheckInterval();setTimeout((function(){this.nextUnit()}).bind(this),500);return true}if(this._audioEl.paused&&!this._audioEl.ended&&this._audioEl.currentTime>0){this._audioEl.play()["catch"](function(){});return true}return false}
                 var v=this._videoEl;if(!v||!this._isPlaying)return false;if(v.ended)return false;
                 var n=Date.now();if(n-this._guardLastResumeTs<this.configs.guardResumeCooldownMs)return false;this._guardLastResumeTs=n;
@@ -403,6 +404,12 @@
                 }
             },
 
+            togglePause:function(){
+                this.configs.paused=!this.configs.paused;this._logPhase("播放",this.configs.paused?"⏸️ 已暂停":"▶️ 已恢复");
+                var btn=document.getElementById('fq-pause-btn');if(btn){btn.textContent=this.configs.paused?'▶️ 播放':'⏸️ 暂停';btn.className=this.configs.paused?'fq-pause-btn fq-paused':'fq-pause-btn fq-playing';}
+                if(!this.configs.paused){if(this._audioEl)this._audioEl.play()["catch"](function(){});if(this._videoEl)this._videoEl.play()["catch"](function(){})}
+            },
+
             // ====== 屏幕防休眠 ======
             _requestWakeLock:function(){
                 var self=this;
@@ -440,6 +447,10 @@
                     '#fq-control-panel .fq-mode-toggle,.fq-mode-normal{font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.12);transition:all 0.15s;background:rgba(255,255,255,0.08);color:#ccc}'+
                     '#fq-control-panel .fq-mode-toggle:hover{background:rgba(255,255,255,0.18);color:#fff}'+
                     '#fq-control-panel .fq-mode-active{background:#FF9800;color:#fff;border-color:#FF9800}'+
+                    '#fq-control-panel .fq-pause-row{display:flex;align-items:center;justify-content:center;margin-bottom:10px}'+
+                    '#fq-control-panel .fq-pause-btn{font-size:14px;padding:6px 20px;border-radius:10px;cursor:pointer;border:1px solid rgba(255,255,255,0.15);transition:all 0.15s;width:100%;text-align:center}'+
+                    '#fq-control-panel .fq-pause-btn.fq-playing{background:rgba(76,175,80,0.25);color:#81C784;border-color:rgba(76,175,80,0.4)}'+
+                    '#fq-control-panel .fq-pause-btn.fq-paused{background:rgba(255,152,0,0.25);color:#FFB74D;border-color:rgba(255,152,0,0.4)}'+
                     '#fq-control-panel .fq-speed-display{text-align:center;font-size:28px;font-weight:700;color:#4FC3F7;margin-bottom:10px}'+
                     '#fq-control-panel .fq-speed-buttons{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px}'+
                     '#fq-control-panel .fq-speed-buttons button{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:#ccc;padding:4px 10px;border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.15s}'+
@@ -452,12 +463,13 @@
                 document.head.appendChild(st);
                 var p=document.createElement('div');p.id='fq-control-panel';
                 var mt=this.configs.loopMode?'🔁 整课循环':'📋 正常模式',mc=this.configs.loopMode?'fq-mode-active':'fq-mode-normal';
-                p.innerHTML='<div class="fq-header"><span>🎮 V5 控制台</span><span class="fq-close">✕</span></div><div class="fq-mode-row"><span class="fq-mode-label" id="fq-mode-label">'+(this.configs.loopMode?'循环中':'顺序播放')+'</span><span class="fq-mode-toggle '+mc+'" id="fq-mode-toggle">'+mt+'</span></div><div class="fq-speed-display" id="fq-speed-value">'+this.configs.playbackRate+'x</div><div class="fq-speed-buttons" id="fq-speed-buttons"><button data-speed="0.5">0.5x</button><button data-speed="0.75">0.75x</button><button data-speed="1.0" class="active">1.0x</button><button data-speed="1.25">1.25x</button><button data-speed="1.5">1.5x</button><button data-speed="2.0">2.0x</button><button data-speed="3.0">3.0x</button></div><div class="fq-custom-row"><input type="number" id="fq-speed-input" step="0.1" min="0.1" max="16" placeholder="自定义"><button id="fq-speed-apply">设置</button></div>';
+                p.innerHTML='<div class="fq-header"><span>🎮 V5 控制台</span><span class="fq-close">✕</span></div><div class="fq-mode-row"><span class="fq-mode-label" id="fq-mode-label">'+(this.configs.loopMode?'循环中':'顺序播放')+'</span><span class="fq-mode-toggle '+mc+'" id="fq-mode-toggle">'+mt+'</span></div><div class="fq-pause-row"><span class="fq-pause-btn fq-playing" id="fq-pause-btn">⏸️ 暂停</span></div><div class="fq-speed-display" id="fq-speed-value">'+this.configs.playbackRate+'x</div><div class="fq-speed-buttons" id="fq-speed-buttons"><button data-speed="0.5">0.5x</button><button data-speed="0.75">0.75x</button><button data-speed="1.0" class="active">1.0x</button><button data-speed="1.25">1.25x</button><button data-speed="1.5">1.5x</button><button data-speed="2.0">2.0x</button><button data-speed="3.0">3.0x</button></div><div class="fq-custom-row"><input type="number" id="fq-speed-input" step="0.1" min="0.1" max="16" placeholder="自定义"><button id="fq-speed-apply">设置</button></div>';
                 document.body.appendChild(p);
                 var self=this,btns=p.querySelectorAll('.fq-speed-buttons button');
                 btns.forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();var r=parseFloat(b.dataset.speed);self.setPlaybackRate(r);btns.forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelector('#fq-speed-value').textContent=r+'x'})});
                 p.querySelector('#fq-speed-apply').addEventListener('click',function(e){e.stopPropagation();var v=parseFloat(p.querySelector('#fq-speed-input').value);if(!isNaN(v)&&v>=0.1&&v<=16){self.setPlaybackRate(v);p.querySelector('#fq-speed-value').textContent=v+'x';btns.forEach(function(b){b.classList.remove('active')})}});
                 p.querySelector('#fq-mode-toggle').addEventListener('click',function(e){e.stopPropagation();self.toggleLoopMode()});
+                p.querySelector('#fq-pause-btn').addEventListener('click',function(e){e.stopPropagation();self.togglePause()});
                 var isD=false,sX,sY,oX,oY;
                 p.querySelector('.fq-header').addEventListener('mousedown',function(e){isD=true;sX=e.clientX;sY=e.clientY;oX=p.offsetLeft;oY=p.offsetTop;p.style.transition='none';e.preventDefault()});
                 document.addEventListener('mousemove',function(e){if(!isD)return;p.style.left=(oX+e.clientX-sX)+'px';p.style.top=(oY+e.clientY-sY)+'px';p.style.bottom='auto';p.style.right='auto'});

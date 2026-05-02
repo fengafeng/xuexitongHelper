@@ -63,6 +63,7 @@
                 guardNoProgressMs: 7000,
                 guardResumeCooldownMs: 1500,
                 loopMode: false,         // true = 整课循环
+                paused: false,            // true = 暂停播放
                 mediaType: 'unknown',     // 'audio' | 'video' | 'unknown'
             },
 
@@ -148,10 +149,14 @@
             _detectPageType() {
                 const url = window.location.href;
                 const path = window.location.pathname;
-                if (path.includes('/mycourse/studentcourse')) return 'course_list';
+                // 课程列表页（i.chaoxing.com/base...）
+                if (url.includes('i.chaoxing.com/base') || path.includes('/studyApp/')) return 'course_list';
+                // 章节列表页（显示课程的所有章节）
+                if (path.includes('/mycourse/studentcourse')) return 'chapter_list';
+                // 学习页面（有 #coursetree + #iframe）
                 if (path.includes('/mycourse/studentstudy')) return 'study_page';
+                // 知识卡片内容页面
                 if (path.includes('/knowledge/cards')) return 'content_page';
-                if (url.includes('/base/')) return 'chapter_list';
                 return 'unknown';
             },
 
@@ -855,6 +860,8 @@
             },
 
             _tryResumePlayback(reason) {
+                // 用户手动暂停时，不自动恢复
+                if (this.configs.paused) return false;
                 // 音频恢复
                 if (this.configs.mediaType !== 'video' && this._audioEl) {
                     if (this._audioEl.ended) {
@@ -1189,6 +1196,21 @@
                 }
             },
 
+            togglePause() {
+                this.configs.paused = !this.configs.paused;
+                this._logPhase("播放", this.configs.paused ? "⏸️ 已暂停（手动）" : "▶️ 已恢复播放");
+                const btn = document.getElementById('fq-pause-btn');
+                if (btn) {
+                    btn.textContent = this.configs.paused ? '▶️ 播放' : '⏸️ 暂停';
+                    btn.className = this.configs.paused ? 'fq-pause-btn fq-paused' : 'fq-pause-btn fq-playing';
+                }
+                // 恢复时尝试继续播放
+                if (!this.configs.paused) {
+                    if (this._audioEl) this._audioEl.play().catch(() => {});
+                    if (this._videoEl) this._videoEl.play().catch(() => {});
+                }
+            },
+
             // ====== 屏幕防休眠 ======
             _requestWakeLock() {
                 if (this._wakeLock) return;
@@ -1257,6 +1279,28 @@
                     #fq-control-panel .fq-mode-normal {
                         background: rgba(255,255,255,0.08); color: #ccc; border-color: rgba(255,255,255,0.12);
                     }
+                    /* 暂停/播放按钮 */
+                    #fq-control-panel .fq-pause-row {
+                        display: flex; align-items: center; justify-content: center;
+                        margin-bottom: 10px;
+                    }
+                    #fq-control-panel .fq-pause-btn {
+                        font-size: 14px; padding: 6px 20px; border-radius: 10px;
+                        cursor: pointer; border: 1px solid rgba(255,255,255,0.15);
+                        transition: all 0.15s; width: 100%; text-align: center;
+                    }
+                    #fq-control-panel .fq-pause-btn.fq-playing {
+                        background: rgba(76,175,80,0.25); color: #81C784; border-color: rgba(76,175,80,0.4);
+                    }
+                    #fq-control-panel .fq-pause-btn.fq-playing:hover {
+                        background: rgba(76,175,80,0.35);
+                    }
+                    #fq-control-panel .fq-pause-btn.fq-paused {
+                        background: rgba(255,152,0,0.25); color: #FFB74D; border-color: rgba(255,152,0,0.4);
+                    }
+                    #fq-control-panel .fq-pause-btn.fq-paused:hover {
+                        background: rgba(255,152,0,0.35);
+                    }
                     /* 速度显示 */
                     #fq-control-panel .fq-speed-display {
                         text-align: center; font-size: 28px; font-weight: 700;
@@ -1303,6 +1347,9 @@
                         <span class="fq-mode-label" id="fq-mode-label">${modeStatus}</span>
                         <span class="fq-mode-toggle ${modeClass}" id="fq-mode-toggle">${modeText}</span>
                     </div>
+                    <div class="fq-pause-row">
+                        <span class="fq-pause-btn fq-playing" id="fq-pause-btn">⏸️ 暂停</span>
+                    </div>
                     <div class="fq-speed-display" id="fq-speed-value">${this.configs.playbackRate}x</div>
                     <div class="fq-speed-buttons" id="fq-speed-buttons">
                         <button data-speed="0.5">0.5x</button>
@@ -1348,6 +1395,12 @@
                 panel.querySelector('#fq-mode-toggle').addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.toggleLoopMode();
+                });
+
+                // 暂停/播放按钮
+                panel.querySelector('#fq-pause-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.togglePause();
                 });
 
                 // 拖拽
