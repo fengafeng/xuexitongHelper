@@ -1259,38 +1259,50 @@
                 }
 
                 if (this.configs.paused) {
-                    // === 暂停：静音+追踪，不调 pause() ===
-                    // 不调 pause() 的目的是防止页面JS检测到暂停后自动恢复
-
-                    // 1) 记下当前位置
+                    // === 暂停：静音 + seek冻结，不调 pause() ===
                     this._pausedAt = target ? target.currentTime : 0;
+
+                    // 1) 直接操作已知的目标元素（最深层的video/audio）
+                    let silencedCount = 0;
                     if (target) {
-                        target.volume = 0;
-                        target.muted = true;
-                        // 不调 pause()！让页面以为还在播放
+                        target.volume = 0; target.muted = true;
+                        target.currentTime = this._pausedAt;
+                        silencedCount++;
+                        this._logPhase("播放-调试", `已冻结主目标 id="${target.id || '(无)'}" at ${this._pausedAt.toFixed(1)}s`);
+                    } else {
+                        this._logPhase("播放-调试", "⚠️ 无可用主目标");
                     }
 
-                    // 2) 暂停兜底：停所有 audio/video 确保没声音
-                    let silencedCount = 0;
-                    const silenceAll = (root) => {
+                    // 2) 兜底：所有层级 iframe 内的 audio/video 全部静音
+                    const silenceAndSeek = (root, isTarget) => {
                         if (!root) return;
                         const all = root.querySelectorAll('audio,video');
-                        for (const m of all) { if (m.volume > 0) { m.volume = 0; m.muted = true; silencedCount++; } }
+                        for (const m of all) {
+                            m.volume = 0; m.muted = true;
+                            if (this._pausedAt > 0 && Math.abs(m.currentTime - this._pausedAt) > 0.5) {
+                                m.currentTime = this._pausedAt;
+                            }
+                            if (!isTarget) silencedCount++;
+                        }
                     };
-                    try { silenceAll(document); } catch(e) {}
-                    try { const f = document.getElementById('iframe'); if (f && f.contentDocument) silenceAll(f.contentDocument); } catch(e) {}
+                    try { silenceAndSeek(document); } catch(e) {}
+                    try {
+                        const f = document.getElementById('iframe');
+                        if (f && f.contentDocument) {
+                            silenceAndSeek(f.contentDocument);
+                            // 3) 再进一层：找 #iframe 内的 ans-insertvideo-online
+                            const inner = f.contentDocument.querySelector('iframe.ans-insertvideo-online, iframe.ans-insertaudio');
+                            if (inner) {
+                                try {
+                                    const idoc = inner.contentDocument || inner.contentWindow?.document;
+                                    if (idoc) silenceAndSeek(idoc);
+                                } catch(e) {}
+                            }
+                        }
+                    } catch(e) {}
                     // 视频额外关闭播放按钮
                     if (this.configs.mediaType === 'video') {
-                        try {
-                            const f = document.getElementById('iframe');
-                            if (f) {
-                                const doc = f.contentDocument || f.contentWindow?.document;
-                                if (doc) {
-                                    const pb = doc.querySelector('.vjs-big-play-button,.vjs-play-control');
-                                    if (pb) pb.click();
-                                }
-                            }
-                        } catch(e) {}
+                        try { const f = document.getElementById('iframe'); if (f) { const doc = f.contentDocument || f.contentWindow?.document; if (doc) { const pb = doc.querySelector('.vjs-big-play-button,.vjs-play-control'); if (pb) pb.click(); } } } catch(e) {}
                     }
 
                     this._logPhase("播放", `⏸️ 已冻结 ${silencedCount} 个元素 (位置 ${this._pausedAt.toFixed(1)}s)`);
@@ -1299,8 +1311,7 @@
                     this._clearCheckInterval();
                     this._isPlaying = false;
 
-                    // 4) 启动守卫：静音 + 不断 seek 回暂停位置（视频/音频视觉冻结）
-                    // 不调 pause() 可避免页面JS自动恢复
+                    // 4) 启动守卫：直接操作已知元素 + 各层级兜底
                     if (!this._pauseWatcher) {
                         this._pauseWatcher = setInterval(() => {
                             if (!this.configs.paused) {
@@ -1308,12 +1319,20 @@
                                 this._pauseWatcher = null;
                                 return;
                             }
+                            // 直接操作已知的 audioEl / videoEl
+                            if (this._videoEl) {
+                                this._videoEl.volume = 0; this._videoEl.muted = true;
+                                if (this._pausedAt > 0) this._videoEl.currentTime = this._pausedAt;
+                            }
+                            if (this._audioEl) {
+                                this._audioEl.volume = 0; this._audioEl.muted = true;
+                                if (this._pausedAt > 0) this._audioEl.currentTime = this._pausedAt;
+                            }
+                            // 兜底
                             try {
                                 document.querySelectorAll('audio,video').forEach(el => {
                                     el.volume = 0; el.muted = true;
-                                    if (this._pausedAt > 0 && Math.abs(el.currentTime - this._pausedAt) > 0.3) {
-                                        el.currentTime = this._pausedAt;
-                                    }
+                                    if (this._pausedAt > 0 && Math.abs(el.currentTime - this._pausedAt) > 0.3) el.currentTime = this._pausedAt;
                                 });
                             } catch(e) {}
                             try {
@@ -1321,9 +1340,7 @@
                                 if (f && f.contentDocument) {
                                     f.contentDocument.querySelectorAll('audio,video').forEach(el => {
                                         el.volume = 0; el.muted = true;
-                                        if (this._pausedAt > 0 && Math.abs(el.currentTime - this._pausedAt) > 0.3) {
-                                            el.currentTime = this._pausedAt;
-                                        }
+                                        if (this._pausedAt > 0 && Math.abs(el.currentTime - this._pausedAt) > 0.3) el.currentTime = this._pausedAt;
                                     });
                                 }
                             } catch(e) {}
