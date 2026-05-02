@@ -86,6 +86,7 @@
             _videoEl: null,
             _treeContainerEl: null,
             _isPlaying: false,
+            _pauseWatcher: null,  // 暂停守卫定时器
             _nextSectionPending: false,
             _currentRetryCount: 0,
             _checkInterval: null,
@@ -1291,8 +1292,15 @@
                         } catch(e) {}
                     }
                     this._logPhase("播放", `⏸️ 已暂停 ${pausedCount} 个媒体元素`);
-                    // 停止监控，防止任何自动恢复
+                    // 停止监控 + 启动暂停守卫（防止页面自动恢复）
                     this._clearCheckInterval();
+                    if (!this._pauseWatcher) {
+                        this._pauseWatcher = setInterval(() => {
+                            if (!this.configs.paused) { clearInterval(this._pauseWatcher); this._pauseWatcher = null; return; }
+                            try { document.querySelectorAll('audio,video').forEach(el => { if (!el.paused) { el.pause(); el.volume = 0; } }); } catch(e) {}
+                            try { const f = document.getElementById('iframe'); if (f && f.contentDocument) { f.contentDocument.querySelectorAll('audio,video').forEach(el => { if (!el.paused) { el.pause(); el.volume = 0; } }); } } catch(e) {}
+                        }, 300);
+                    }
                     this._isPlaying = false;
                 } else {
                     if (target) {
@@ -1306,6 +1314,8 @@
                         this._logPhase("播放-调试", `▶️ 恢复: 无可用${targetType}元素`);
                     }
                     this._isPlaying = true;
+                    // 清除暂停守卫
+                    if (this._pauseWatcher) { clearInterval(this._pauseWatcher); this._pauseWatcher = null; }
                 }
             },
 

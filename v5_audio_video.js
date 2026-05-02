@@ -64,6 +64,7 @@
             _videoEl: null,
             _treeContainerEl: null,
             _isPlaying: false,
+            _pauseWatcher: null,
             _nextSectionPending: false,
             _currentRetryCount: 0,
             _checkInterval: null,
@@ -586,15 +587,20 @@
                     target=this._audioEl;targetType='音频';
                 }
                 if(this.configs.paused){
-                    var pc=0;if(target){target.pause();target.volume=0;pc++}else{this._logPhase("播放-调试","⏸️ 无"+targetType+"元素")}
-                    try{var all=document.querySelectorAll('audio,video');for(var i=0;i<all.length;i++){var m=all[i];if(!m.paused){m.pause();m.volume=0;pc++}}}catch(e){}
-                    try{var f=document.getElementById('iframe');if(f&&f.contentDocument){var all=f.contentDocument.querySelectorAll('audio,video');for(var i=0;i<all.length;i++){var m=all[i];if(!m.paused){m.pause();m.volume=0;pc++}}}}catch(e){}
-                    if(this.configs.mediaType==='video'){try{var f2=document.getElementById('iframe');if(f2){var doc2=f2.contentDocument||f2.contentWindow?.document;if(doc2){var pbtn=doc2.querySelector('.vjs-big-play-button,.vjs-play-control');if(pbtn)pbtn.click()}}}catch(e){}}
-                    this._logPhase("播放","⏸️ 已暂停 "+pc+" 个媒体元素");
+                    let paused=0;
+                    if(target){target.pause();target.volume=0;paused++}
+                    try{const all=document.querySelectorAll('audio,video');for(const m of all){if(!m.paused){m.pause();m.volume=0;paused++}}}catch(e){}
+                    try{const f=document.getElementById('iframe');if(f&&f.contentDocument){const all=f.contentDocument.querySelectorAll('audio,video');for(const m of all){if(!m.paused){m.pause();m.volume=0;paused++}}}}catch(e){}
+                    if(this.configs.mediaType==='video'){try{const f=document.getElementById('iframe');if(f){const doc=f.contentDocument||f.contentWindow?.document;if(doc){const btn=doc.querySelector('.vjs-big-play-button,.vjs-play-control');if(btn)btn.click()}}}catch(e){}}
+                    this._logPhase("播放","⏸️ 已暂停 "+paused+" 个媒体元素");
+                    // Stop monitoring + start pause guard (prevents page auto-resume)
+                    this._clearCheckInterval();
+                    if(!this._pauseWatcher){this._pauseWatcher=setInterval(function(){if(!this.configs.paused){clearInterval(this._pauseWatcher);this._pauseWatcher=null;return}try{document.querySelectorAll('audio,video').forEach(function(el){if(!el.paused){el.pause();el.volume=0}})}catch(e){}try{var f=document.getElementById('iframe');if(f&&f.contentDocument){f.contentDocument.querySelectorAll('audio,video').forEach(function(el){if(!el.paused){el.pause();el.volume=0}})}}catch(e){}}.bind(this),300)}
                     this._isPlaying=false;
                 }else{
                     if(target){target.volume=1;target.muted=true;target.play()["catch"](function(){target.muted=true;target.play()["catch"](function(e){})});this._logPhase("播放","▶️ "+targetType+"恢复 (rate: "+target.playbackRate+"x)")}else{this._logPhase("播放-调试","▶️ 无"+targetType+"元素")}
                     this._isPlaying=true;
+                    if(this._pauseWatcher){clearInterval(this._pauseWatcher);this._pauseWatcher=null;}
                     if(this.configs.mediaType==='video'){this._startVideoMonitoring()}
                 }
             },
