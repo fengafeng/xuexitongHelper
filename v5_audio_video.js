@@ -32,15 +32,6 @@
 
     function initializePlayer() {
         window.app = {
-            _logPhase(phaseName, detail = '') {
-                const prefix = `【${phaseName}】`;
-                const msg = detail ? `${prefix} ${detail}` : prefix;
-                console.log(`%c${msg}`, "color:#FF9800;font-weight:bold;font-size:13px");
-                if (detail) {
-                    console.log(`%c  └─ 详情:`, "color:#9E9E9E", detail);
-                }
-            },
-
             configs: {
                 playbackRate: 1.0,
                 autoplay: true,
@@ -54,6 +45,18 @@
                 loopMode: false,
                 paused: false,
                 mediaType: 'unknown',
+            },
+
+            // ======== 调试日志 ========
+            _logBuffer: [],
+            _logMax: 100,
+            _logPhase(name, detail) {
+                const ts = new Date().toLocaleTimeString();
+                const msg = `[${ts}] ${name}${detail ? ': ' + detail : ''}`;
+                console.log(`%c【${name}】${detail ? ' ' + detail : ''}`, 'color:#FF9800;font-weight:bold;font-size:13px');
+                this._logBuffer.push(msg);
+                if (this._logBuffer.length > this._logMax) this._logBuffer.shift();
+                this._updateDebugPanel();
             },
 
             _audioEls: [],
@@ -87,8 +90,8 @@
                 const inTop=window.self===window.top;
                 this._logPhase("V5 诊断",`页面类型: ${pageType}, 顶层: ${inTop}, iframes: ${document.querySelectorAll('iframe').length}, #iframe: ${!!document.getElementById('iframe')}`);
                 if (pageType==='course_list') { this._logPhase("V5 启动","课程列表页跳过"); return; }
-                if (pageType==='chapter_list') { this._logPhase("V5 启动","章节列表→自动进入"); if(inTop)this._createControlPanel(); this._runChapterListAuto(); return; }
-                if (inTop) { this._createControlPanel(); this._requestWakeLock(); }
+                if (pageType==='chapter_list') { this._logPhase("V5 启动","章节列表→自动进入"); if(inTop){this._createControlPanel();this._createDebugPanel()} this._runChapterListAuto(); return; }
+                if (inTop) { this._createControlPanel(); this._createDebugPanel(); this._requestWakeLock(); }
                 this._delayedMediaDetect(0);
             },
             _delayedMediaDetect(attempt=0) {
@@ -562,7 +565,15 @@
                 this._logPhase("播放",this.configs.paused?"⏸️ 已暂停":"▶️ 已恢复");
                 const btn=document.getElementById('fq-pause-btn');
                 if(btn){btn.textContent=this.configs.paused?'▶️ 播放':'⏸️ 暂停';btn.className=this.configs.paused?'fq-pause-btn fq-paused':'fq-pause-btn fq-playing';}
-                if(!this.configs.paused){if(this._audioEl)this._audioEl.play()["catch"](function(){});if(this._videoEl)this._videoEl.play()["catch"](function(){});}
+                if(this.configs.paused){
+                    if(this._audioEl){this._audioEl.pause();console.log("%c⏸️ 音频暂停","color:#FF9800")}
+                    if(this._videoEl){this._videoEl.pause();console.log("%c⏸️ 视频暂停","color:#FF9800")}
+                    this._isPlaying=false;
+                }else{
+                    this._isPlaying=true;
+                    if(this._audioEl){this._audioEl.play()["catch"](function(){});console.log("%c▶️ 音频恢复","color:#4CAF50")}
+                    if(this._videoEl){this._videoEl.play()["catch"](function(){});console.log("%c▶️ 视频恢复","color:#4CAF50")}
+                }
             },
 
             _requestWakeLock() {
@@ -617,6 +628,117 @@
                 p.querySelector('.fq-close').addEventListener('click',function(e){e.stopPropagation();p.style.opacity='0.3'});
                 p.addEventListener('click',function(){p.style.opacity='1'});
                 console.log("%c✓ V5 控制面板已创建","color:#4CAF50;font-weight:bold");
+            },
+
+            // ====== 调试日志面板 ======
+            _createDebugPanel() {
+                if (document.getElementById('fq-debug-panel')) return;
+                const style = document.createElement('style');
+                style.textContent = `
+                    #fq-debug-panel {
+                        position: fixed; top: 80px; left: 10px; z-index: 999998;
+                        width: 320px; max-height: 400px;
+                        background: rgba(20,20,30,0.85); backdrop-filter: blur(8px);
+                        border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
+                        padding: 10px; font-family: "Consolas","Monaco",monospace; font-size: 11px;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.4); overflow: hidden;
+                        display: flex; flex-direction: column;
+                    }
+                    #fq-debug-panel .fq-debug-header {
+                        display: flex; justify-content: space-between; align-items: center;
+                        margin-bottom: 6px; color: #888; font-size: 11px;
+                        cursor: move; user-select: none;
+                    }
+                    #fq-debug-panel .fq-debug-header span { font-family: "Segoe UI",sans-serif; }
+                    #fq-debug-panel .fq-debug-copy {
+                        cursor: pointer; color: #4FC3F7; font-family: "Segoe UI",sans-serif;
+                        padding: 2px 8px; border-radius: 4px; font-size: 11px;
+                        background: rgba(79,195,247,0.1);
+                    }
+                    #fq-debug-panel .fq-debug-copy:hover { background: rgba(79,195,247,0.2); }
+                    #fq-debug-panel .fq-debug-body {
+                        flex: 1; overflow-y: auto; max-height: 330px;
+                        scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+                    }
+                    #fq-debug-panel .fq-debug-body::-webkit-scrollbar { width: 3px; }
+                    #fq-debug-panel .fq-debug-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+                    #fq-debug-panel .fq-debug-entry {
+                        color: #ccc; line-height: 1.5; padding: 1px 0;
+                        border-bottom: 1px solid rgba(255,255,255,0.04);
+                        word-break: break-all;
+                    }
+                    #fq-debug-panel .fq-debug-close {
+                        cursor: pointer; color: #666; font-size: 16px; line-height: 1; padding: 0 4px;
+                    }
+                    #fq-debug-panel .fq-debug-close:hover { color: #fff; }
+                `;
+                document.head.appendChild(style);
+
+                const panel = document.createElement('div');
+                panel.id = 'fq-debug-panel';
+                panel.innerHTML = `
+                    <div class="fq-debug-header">
+                        <span>🐛 调试日志 <span style="color:#666;font-size:10px">(${this._logBuffer.length}条)</span></span>
+                        <span style="display:flex;gap:6px;align-items:center">
+                            <span class="fq-debug-copy" id="fq-debug-copy">📋 复制</span>
+                            <span class="fq-debug-close" id="fq-debug-close">✕</span>
+                        </span>
+                    </div>
+                    <div class="fq-debug-body" id="fq-debug-body"></div>
+                `;
+                document.body.appendChild(panel);
+
+                // 拖拽
+                let isDrag = false, sx, sy, ox, oy;
+                const hdr = panel.querySelector('.fq-debug-header');
+                hdr.addEventListener('mousedown', (e) => {
+                    isDrag = true; sx = e.clientX; sy = e.clientY;
+                    ox = panel.offsetLeft; oy = panel.offsetTop;
+                    panel.style.transition = 'none'; e.preventDefault();
+                });
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDrag) return;
+                    panel.style.left = (ox + e.clientX - sx) + 'px';
+                    panel.style.top = (oy + e.clientY - sy) + 'px';
+                    panel.style.right = 'auto';
+                });
+                document.addEventListener('mouseup', () => { isDrag = false; panel.style.transition = ''; });
+
+                // 复制
+                panel.querySelector('#fq-debug-copy').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const text = this._logBuffer.join('\n');
+                    navigator.clipboard.writeText(text).then(() => {
+                        const btn = panel.querySelector('#fq-debug-copy');
+                        btn.textContent = '✅ 已复制';
+                        setTimeout(() => { btn.textContent = '📋 复制'; }, 2000);
+                    }).catch(() => {
+                        const ta = document.createElement('textarea');
+                        ta.value = text; document.body.appendChild(ta);
+                        ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                    });
+                });
+
+                // 关闭
+                panel.querySelector('#fq-debug-close').addEventListener('click', (e) => {
+                    e.stopPropagation(); panel.style.display = 'none';
+                });
+
+                console.log("%c✓ 调试日志面板已创建", "color:#607D8B");
+            },
+
+            _updateDebugPanel() {
+                const body = document.getElementById('fq-debug-body');
+                if (!body) return;
+                const entries = this._logBuffer.slice(-30);
+                body.innerHTML = entries.map(msg =>
+                    `<div class="fq-debug-entry">${msg.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`
+                ).join('');
+                body.scrollTop = body.scrollHeight;
+                const header = document.querySelector('#fq-debug-panel .fq-debug-header span');
+                if (header) {
+                    header.innerHTML = `🐛 调试日志 <span style="color:#666;font-size:10px">(${this._logBuffer.length}条)</span>`;
+                }
             },
         };
 
