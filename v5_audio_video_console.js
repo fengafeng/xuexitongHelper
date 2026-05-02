@@ -24,14 +24,12 @@
 
             run:function(){
                 this._logPhase("V5","控制台版 - URL: "+location.href.substring(0,80));
-                var inIframe=window.self!==window.top;
-                if(inIframe){this._logPhase("V5","⚠️ 当前在 iframe 子页面内")}
+                var inTop=window.self===window.top;
                 var pt=this._detectPageType();
-                this._logPhase("V5诊断","页面类型: "+pt+", 子页面: "+inIframe+", iframes: "+document.querySelectorAll('iframe').length+", #iframe: "+!!document.getElementById('iframe'));
-                if(pt==='course_list'||pt==='chapter_list'){this._logPhase("V5","列表页跳过");return}
-                this._createControlPanel();
-                this._requestWakeLock();
-                if(inIframe){this._logPhase("V5","💡 建议在主页(studentstudy)粘贴")}
+                this._logPhase("V5诊断","页面类型: "+pt+", 顶层: "+inTop+", iframes: "+document.querySelectorAll('iframe').length+", #iframe: "+!!document.getElementById('iframe'));
+                if(pt==='course_list'){this._logPhase("V5","课程列表页跳过");return}
+                if(pt==='chapter_list'){this._logPhase("V5","章节列表→自动进入");if(inTop)this._createControlPanel();this._runChapterListAuto();return}
+                if(inTop){this._createControlPanel();this._requestWakeLock()}
                 var self=this;
                 var doDetect=function(attempt){
                     self._detectMediaType();
@@ -49,6 +47,23 @@
             },
 
             _detectPageType:function(){var u=window.location.pathname;if(u.includes('/mycourse/studentcourse'))return'course_list';if(u.includes('/mycourse/studentstudy'))return'study_page';if(u.includes('/knowledge/cards'))return'content_page';return'unknown'},
+
+            _runChapterListAuto:function(){
+                this._logPhase("章节列表","检测章节完成状态...");
+                var self=this;
+                var check=function(){
+                    var nodes=document.querySelectorAll('.timeline .leveltwo, .content1 .leveltwo, .main .leveltwo');
+                    if(!nodes||nodes.length===0){
+                        var fb=document.querySelectorAll('.orange');
+                        if(fb.length>0){for(var i=0;i<fb.length;i++){var l=fb[i].closest('a')||(fb[i].closest('h3')?fb[i].closest('h3').querySelector('a'):null);if(l){self._logPhase("章节列表","▶️ 进入未完成");l.click();return}}}
+                        self._logPhase("章节列表","未加载，3秒后重试");setTimeout(check,3000);return
+                    }
+                    self._logPhase("章节列表",nodes.length+"个章节");
+                    for(var i=0;i<nodes.length;i++){var n=nodes[i],o=n.querySelector('.orange'),l=n.querySelector('h3 a,a[href*=\"studentstudy\"]');if(o&&l){self._logPhase("章节列表","▶️ 未完成→进入");l.click();return}}
+                    self._logPhase("章节列表","✅ 全部已完成")
+                };
+                setTimeout(check,2000)
+            },
 
             _detectMediaType:function(){
                 this._logPhase("媒体检测","检测...");
@@ -412,6 +427,7 @@
 
             // 面板
             _createControlPanel:function(){
+                if(window.self!==window.top)return;
                 if(document.getElementById('fq-control-panel'))return;
                 var st=document.createElement('style');
                 st.textContent='#fq-control-panel{position:fixed;bottom:30px;right:30px;z-index:999999;background:rgba(30,30,40,0.88);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:16px 20px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,0.45);cursor:move;user-select:none;font-family:"Segoe UI",sans-serif;transition:opacity 0.3s}'+

@@ -83,10 +83,11 @@
             run() {
                 this._logPhase("V5 启动", `音视频混合版 - ${location.href.substring(0,80)}`);
                 const pageType=this._detectPageType();
-                this._logPhase("V5 诊断",`页面类型: ${pageType}, iframes: ${document.querySelectorAll('iframe').length}, #iframe: ${!!document.getElementById('iframe')}`);
-                if (pageType==='course_list'||pageType==='chapter_list') { this._logPhase("V5 启动","列表页跳过"); return; }
-                this._createControlPanel();
-                this._requestWakeLock();
+                const inTop=window.self===window.top;
+                this._logPhase("V5 诊断",`页面类型: ${pageType}, 顶层: ${inTop}, iframes: ${document.querySelectorAll('iframe').length}, #iframe: ${!!document.getElementById('iframe')}`);
+                if (pageType==='course_list') { this._logPhase("V5 启动","课程列表页跳过"); return; }
+                if (pageType==='chapter_list') { this._logPhase("V5 启动","章节列表→自动进入"); if(inTop)this._createControlPanel(); this._runChapterListAuto(); return; }
+                if (inTop) { this._createControlPanel(); this._requestWakeLock(); }
                 this._delayedMediaDetect(0);
             },
             _delayedMediaDetect(attempt=0) {
@@ -110,6 +111,23 @@
                 if (path.includes('/knowledge/cards')) return 'content_page';
                 if (url.includes('/base/')) return 'chapter_list';
                 return 'unknown';
+            },
+
+            _runChapterListAuto() {
+                this._logPhase("章节列表","检测章节完成状态...");
+                var self=this;
+                var check=function(){
+                    var nodes=document.querySelectorAll('.timeline .leveltwo, .content1 .leveltwo, .main .leveltwo');
+                    if(!nodes||nodes.length===0){
+                        var fb=document.querySelectorAll('.orange');
+                        if(fb.length>0){for(var i=0;i<fb.length;i++){var l=fb[i].closest('a')||(fb[i].closest('h3')?fb[i].closest('h3').querySelector('a'):null);if(l){self._logPhase("章节列表","▶️ 进入未完成");l.click();return}}}
+                        self._logPhase("章节列表","未加载，3秒后重试");setTimeout(check,3000);return
+                    }
+                    self._logPhase("章节列表",nodes.length+"个章节");
+                    for(var i=0;i<nodes.length;i++){var n=nodes[i],o=n.querySelector('.orange'),l=n.querySelector('h3 a,a[href*=\"studentstudy\"]');if(o&&l){self._logPhase("章节列表","▶️ 未完成→进入");l.click();return}}
+                    self._logPhase("章节列表","✅ 全部已完成")
+                };
+                setTimeout(check,2000)
             },
 
             _detectMediaType() {
@@ -546,6 +564,7 @@
             // ==================== 悬浮面板 ====================
 
             _createControlPanel() {
+                if(window.self!==window.top)return;
                 if (document.getElementById('fq-control-panel')) return;
                 const style=document.createElement('style');
                 style.textContent='#fq-control-panel{position:fixed;bottom:30px;right:30px;z-index:999999;background:rgba(30,30,40,0.88);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:16px 20px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,0.45);cursor:move;user-select:none;font-family:"Segoe UI",sans-serif;transition:opacity 0.3s}'+

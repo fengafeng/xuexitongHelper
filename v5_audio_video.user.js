@@ -99,14 +99,28 @@
             run() {
                 this._logPhase("V5 启动", `音视频混合版 - ${location.href.substring(0,80)}`);
                 const pageType = this._detectPageType();
-                this._logPhase("V5 诊断", `页面类型: ${pageType}, iframes: ${document.querySelectorAll('iframe').length}, #iframe: ${!!document.getElementById('iframe')}`);
-                if (pageType === 'course_list' || pageType === 'chapter_list') {
-                    this._logPhase("V5 启动", "课程列表/章节列表页，跳过");
+                const inTop = window.self === window.top;
+                this._logPhase("V5 诊断", `页面类型: ${pageType}, 顶层: ${inTop}, iframes: ${document.querySelectorAll('iframe').length}, #iframe: ${!!document.getElementById('iframe')}`);
+                
+                // 课程列表页 → 跳过
+                if (pageType === 'course_list') {
+                    this._logPhase("V5 启动", "课程列表页，跳过");
                     return;
                 }
-                // 先创建面板（让用户立即看到界面）
-                this._createControlPanel();
-                this._requestWakeLock();
+                
+                // 章节列表页 → 自动检测并进入未完成章节
+                if (pageType === 'chapter_list') {
+                    this._logPhase("V5 启动", "章节列表页 → 启动章节检测");
+                    if (inTop) this._createControlPanel();
+                    this._runChapterListAuto();
+                    return;
+                }
+                
+                // 只在顶层窗口创建面板（子页面不创建，避免重复）
+                if (inTop) {
+                    this._createControlPanel();
+                    this._requestWakeLock();
+                }
                 // 延迟检测媒体类型，等待 #iframe 加载完成
                 this._delayedMediaDetect(0);
             },
@@ -139,6 +153,54 @@
                 if (path.includes('/knowledge/cards')) return 'content_page';
                 if (url.includes('/base/')) return 'chapter_list';
                 return 'unknown';
+            },
+
+            /* ==================== 章节列表自动化 ==================== */
+
+            _runChapterListAuto() {
+                this._logPhase("章节列表", "检测章节完成状态...");
+                const checkChapters = () => {
+                    let levelNodes = document.querySelectorAll('.timeline .leveltwo, .content1 .leveltwo, .main .leveltwo');
+                    if (!levelNodes || levelNodes.length === 0) {
+                        // 兜底：找 orange / openlock 标记直接点
+                        const fallback = document.querySelectorAll('.orange');
+                        if (fallback.length > 0) {
+                            this._logPhase("章节列表", `通过 .orange 找到 ${fallback.length} 个未完成标记`);
+                            for (const m of fallback) {
+                                const link = m.closest('a') || m.closest('h3')?.querySelector('a');
+                                if (link) {
+                                    this._logPhase("章节列表", `▶️ 进入未完成章节`);
+                                    link.click();
+                                    return;
+                                }
+                            }
+                        }
+                        this._logPhase("章节列表", "章节树未加载，3秒后重试");
+                        setTimeout(checkChapters, 3000);
+                        return;
+                    }
+                    this._logPhase("章节列表", `找到 ${levelNodes.length} 个章节`);
+                    for (const node of levelNodes) {
+                        const orange = node.querySelector('.orange');
+                        const openlock = node.querySelector('.openlock');
+                        const count = node.querySelector('.knowledgeJobCount');
+                        if (orange) {
+                            const link = node.querySelector('h3 a, a[href*="studentstudy"]');
+                            if (link) {
+                                this._logPhase("章节列表", `▶️ 未完成 → 点击进入`);
+                                link.click();
+                                return;
+                            }
+                        } else if (openlock) {
+                            // 已完成，跳过
+                        } else if (count && count.value !== '0') {
+                            const link = node.querySelector('h3 a, a[href*="studentstudy"]');
+                            if (link) { link.click(); return; }
+                        }
+                    }
+                    this._logPhase("章节列表", "✅ 所有章节已完成");
+                };
+                setTimeout(checkChapters, 2000);
             },
 
             /* ==================== 媒体类型检测 ==================== */
@@ -1151,6 +1213,8 @@
             /* ==================== 悬浮控制面板 ==================== */
 
             _createControlPanel() {
+                // 只在顶层窗口创建面板（子页面不创建，避免重复）
+                if (window.self !== window.top) return;
                 if (document.getElementById('fq-control-panel')) return;
                 const style = document.createElement('style');
                 style.textContent = `
