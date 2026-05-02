@@ -19,6 +19,7 @@
             configs:{playbackRate:1,autoplay:true,mutePageAudio:true,retryInterval:2000,maxRetries:10,audioCheckInterval:1000,videoCheckInterval:1000,guardNoProgressMs:7000,guardResumeCooldownMs:1500,loopMode:false,mediaType:'unknown'},
             _audioEls:[],_audioIndex:0,_videoEl:null,_treeContainerEl:null,_isPlaying:false,_nextSectionPending:false,_currentRetryCount:0,_checkInterval:null,_stepSwitchPending:false,_stepSwitchAt:0,_tryTimes:0,_skipCount:0,
             _videoIframes:[],_videoIframeIndex:0,_guardLastTime:0,_guardLastWallTs:0,_guardLastResumeTs:0,
+            _wakeLock:null,
             _cellData:{cells:0,nCells:0,currentCellIndex:0,currentNCellIndex:0,currentTitle:''},
 
             run:function(){
@@ -29,6 +30,7 @@
                 this._logPhase("V5诊断","页面类型: "+pt+", 子页面: "+inIframe+", iframes: "+document.querySelectorAll('iframe').length+", #iframe: "+!!document.getElementById('iframe'));
                 if(pt==='course_list'||pt==='chapter_list'){this._logPhase("V5","列表页跳过");return}
                 this._createControlPanel();
+                this._requestWakeLock();
                 if(inIframe){this._logPhase("V5","💡 建议在主页(studentstudy)粘贴")}
                 var self=this;
                 var doDetect=function(attempt){
@@ -386,6 +388,28 @@
                 }
             },
 
+            // ====== 屏幕防休眠 ======
+            _requestWakeLock:function(){
+                var self=this;
+                if(self._wakeLock)return;
+                if(!navigator.wakeLock||!navigator.wakeLock.request){
+                    self._logPhase("防休眠","WakeLock API 不支持，使用视频/音频播放保持唤醒");
+                    return
+                }
+                navigator.wakeLock.request('screen').then(function(sentinel){
+                    self._wakeLock=sentinel;
+                    self._logPhase("防休眠","✅ 屏幕唤醒已锁定");
+                    sentinel.addEventListener('release',function(){
+                        self._logPhase("防休眠","⚠️ 唤醒被释放（可能被系统收回），10秒后重新申请");
+                        self._wakeLock=null;
+                        setTimeout(function(){self._requestWakeLock()},10000)
+                    })
+                })["catch"](function(e){
+                    self._logPhase("防休眠","❌ 申请失败: "+e.message+"，10秒后重试");
+                    setTimeout(function(){self._requestWakeLock()},10000)
+                })
+            },
+
             // 面板
             _createControlPanel:function(){
                 if(document.getElementById('fq-control-panel'))return;
@@ -436,6 +460,11 @@
             document.addEventListener("mouseout",pp);window.addEventListener("mouseout",pp);
             window.addEventListener("blur",function(){rp()});
             document.addEventListener("visibilitychange",function(){rp()});
+            // 每30秒保活：重新申请屏幕唤醒锁 + 尝试恢复播放
+            setInterval(function(){
+                if(window.app&&window.app._wakeLock===null&&typeof window.app._requestWakeLock==="function")window.app._requestWakeLock();
+                if(window.app&&typeof window.app._tryResumePlayback==="function")window.app._tryResumePlayback("keep-alive")
+            },30000);
             console.log("%c═══════════════════════════════════════","color:#4CAF50;font-size:14px");
             console.log("%c  ✅ V5 控制台版启动完成","color:#4CAF50;font-size:14px;font-weight:bold");
             console.log("%c═══════════════════════════════════════","color:#4CAF50;font-size:14px");

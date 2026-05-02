@@ -67,6 +67,7 @@
             _stepSwitchAt: 0,
             _tryTimes: 0,
             _skipCount: 0,
+            _wakeLock: null,
 
             _videoIframes: [],
             _videoIframeIndex: 0,
@@ -85,6 +86,7 @@
                 this._logPhase("V5 诊断",`页面类型: ${pageType}, iframes: ${document.querySelectorAll('iframe').length}, #iframe: ${!!document.getElementById('iframe')}`);
                 if (pageType==='course_list'||pageType==='chapter_list') { this._logPhase("V5 启动","列表页跳过"); return; }
                 this._createControlPanel();
+                this._requestWakeLock();
                 this._delayedMediaDetect(0);
             },
             _delayedMediaDetect(attempt=0) {
@@ -535,6 +537,12 @@
                 }
             },
 
+            _requestWakeLock() {
+                if(this._wakeLock)return;
+                if(!navigator.wakeLock||!navigator.wakeLock.request){this._logPhase("防休眠","WakeLock不支持");return}
+                navigator.wakeLock.request('screen').then((sentinel)=>{this._wakeLock=sentinel;this._logPhase("防休眠","✅ 唤醒已锁定");sentinel.addEventListener('release',()=>{this._wakeLock=null;this._logPhase("防休眠","释放，10秒后重申请");setTimeout(()=>this._requestWakeLock(),10000)})})["catch"]((e)=>{this._logPhase("防休眠","❌ "+e.message+"，10秒后重试");setTimeout(()=>this._requestWakeLock(),10000)})
+            },
+
             // ==================== 悬浮面板 ====================
 
             _createControlPanel() {
@@ -586,6 +594,11 @@
             document.addEventListener("mouseout",pp);window.addEventListener("mouseout",pp);
             window.addEventListener("blur",function(){rp()});
             document.addEventListener("visibilitychange",function(){rp()});
+            // 每30秒保活
+            setInterval(function(){
+                if(window.app&&window.app._wakeLock===null&&typeof window.app._requestWakeLock==="function")window.app._requestWakeLock();
+                if(window.app&&typeof window.app._tryResumePlayback==="function")window.app._tryResumePlayback("keep-alive")
+            },30000);
             console.log("%c═══════════════════════════════════════","color:#4CAF50;font-size:14px");
             console.log("%c  ✅ V5 音视频混合脚本启动完成","color:#4CAF50;font-size:14px;font-weight:bold");
             console.log("%c═══════════════════════════════════════","color:#4CAF50;font-size:14px");

@@ -79,6 +79,7 @@
             _stepSwitchAt: 0,
             _tryTimes: 0,
             _skipCount: 0,
+            _wakeLock: null,
 
             // ======== 视频专用状态 ========
             _videoIframes: [],
@@ -105,6 +106,7 @@
                 }
                 // 先创建面板（让用户立即看到界面）
                 this._createControlPanel();
+                this._requestWakeLock();
                 // 延迟检测媒体类型，等待 #iframe 加载完成
                 this._delayedMediaDetect(0);
             },
@@ -1125,6 +1127,27 @@
                 }
             },
 
+            // ====== 屏幕防休眠 ======
+            _requestWakeLock() {
+                if (this._wakeLock) return;
+                if (!navigator.wakeLock || !navigator.wakeLock.request) {
+                    this._logPhase("防休眠", "WakeLock API 不支持，使用播放保持唤醒");
+                    return;
+                }
+                navigator.wakeLock.request('screen').then((sentinel) => {
+                    this._wakeLock = sentinel;
+                    this._logPhase("防休眠", "✅ 屏幕唤醒已锁定");
+                    sentinel.addEventListener('release', () => {
+                        this._logPhase("防休眠", "⚠️ 唤醒被释放，10秒后重新申请");
+                        this._wakeLock = null;
+                        setTimeout(() => this._requestWakeLock(), 10000);
+                    });
+                }).catch((e) => {
+                    this._logPhase("防休眠", `❌ 申请失败: ${e.message}，10秒后重试`);
+                    setTimeout(() => this._requestWakeLock(), 10000);
+                });
+            },
+
             /* ==================== 悬浮控制面板 ==================== */
 
             _createControlPanel() {
@@ -1308,6 +1331,11 @@
             window.addEventListener("mouseout", preventPause);
             window.addEventListener("blur", () => resumePlaybackNow());
             document.addEventListener("visibilitychange", () => resumePlaybackNow());
+            // 每30秒保活
+            setInterval(function(){
+                if(window.app&&window.app._wakeLock===null&&typeof window.app._requestWakeLock==="function")window.app._requestWakeLock();
+                if(window.app&&typeof window.app._tryResumePlayback==="function")window.app._tryResumePlayback("keep-alive")
+            },30000);
 
             console.log("%c═══════════════════════════════════════", "color:#4CAF50;font-size:14px");
             console.log("%c  ✅ V5 音视频混合脚本启动完成", "color:#4CAF50;font-size:14px;font-weight:bold");
