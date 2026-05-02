@@ -146,7 +146,8 @@
             },
 
             _getAudioEl:function(){
-                if(!this._audioEl){
+                var self=this;
+                if(!self._audioEl){
                     var findFrame=function(){
                         var sel=["iframe.ans-insertaudio","iframe[class*='audio']","iframe[name*='audio']","iframe[title*='audio']","div[id*='ans-insertaudio'] iframe","iframe[src*='audio']",".ans-insertaudio iframe"];
                         for(var i=0;i<sel.length;i++){var f=$(sel[i]);if(f.length>0)return f.eq(0)}
@@ -157,12 +158,24 @@
                     var frameObj=findFrame();if(!frameObj||frameObj.length===0)return null;
                     var iframeDoc;try{iframeDoc=frameObj.contents?frameObj.contents():$(frameObj[0]).contents()}catch(e){return null}
                     if(!iframeDoc||iframeDoc.length===0)return null;
-                    var audio=iframeDoc.find("audio").get(0);
-                    if(!audio){var vc=iframeDoc.find(".video-js,#audio.video-js,.audio-player");if(vc.length>0)audio=vc.find("audio").get(0)}
-                    if(!audio){var am=iframeDoc.find("audio,video");if(am.length>0)audio=am.get(0)}
-                    if(audio)this._audioEl=audio
+                    // Score candidates to find the actual playing audio
+                    var candidates=iframeDoc.find("audio");
+                    if(candidates.length===0)return null;
+                    var best=null,bestScore=-1;
+                    candidates.each(function(i,el){
+                        var $el=$(el),score=0;
+                        if(el.currentTime>0)score+=100;
+                        if(el.duration>0)score+=50;
+                        score+=(el.readyState||0)*10;
+                        var id=$el.attr('id')||'';
+                        if(id==='audio_html5_api')score+=500;
+                        if(id==='audio'||id==='audio1_html5_white')score+=20;
+                        self._logPhase("_getAudioEl-候选",'id="'+id+'" score='+score+' currentTime='+el.currentTime+' readyState='+el.readyState);
+                        if(score>bestScore){bestScore=score;best=el}
+                    });
+                    if(best){self._audioEl=best;self._logPhase("_getAudioEl",'✅ 选中 id="'+($(best).attr('id')||'无id')+'" score='+bestScore)}
                 }
-                return this._audioEl||null
+                return self._audioEl||null
             },
 
             play:async function(){
@@ -411,8 +424,17 @@
                 var target=null,type='';
                 if(this.configs.mediaType==='video'){if(!this._videoEl){var idx=this._videoIframeIndex;if(idx!==undefined&&this._videoIframes&&this._videoIframes.length>0){this._videoEl=this._getVideoElByIndex(idx);this._logPhase("播放-调试","重新获取视频["+idx+"]: "+(this._videoEl?"✅":"❌"))}}target=this._videoEl;type='视频'}
                 else{if(!this._audioEl){this._audioEl=this._getAudioEl();this._logPhase("播放-调试","重新获取音频: "+(this._audioEl?"✅":"❌"))}target=this._audioEl;type='音频'}
-                if(this.configs.paused){if(target){target.pause();this._logPhase("播放","⏸️ "+type+"暂停 "+(target.currentTime||0).toFixed(1)+"s")}else{this._logPhase("播放-调试","⏸️ 无"+type+"元素")}this._isPlaying=false}
-                else{if(target){target.muted=true;target.play()["catch"](function(){});this._logPhase("播放","▶️ "+type+"恢复 "+(target.playbackRate||1)+"x")}else{this._logPhase("播放-调试","▶️ 无"+type+"元素")}this._isPlaying=true}
+                if(this.configs.paused){
+                    var pc=0;if(target){target.pause();target.volume=0;pc++}else{this._logPhase("播放-调试","⏸️ 无"+type+"元素")}
+                    try{var all=document.querySelectorAll('audio,video');for(var i=0;i<all.length;i++){var m=all[i];if(!m.paused){m.pause();m.volume=0;pc++}}}catch(e){}
+                    try{var f=document.getElementById('iframe');if(f&&f.contentDocument){var all=f.contentDocument.querySelectorAll('audio,video');for(var i=0;i<all.length;i++){var m=all[i];if(!m.paused){m.pause();m.volume=0;pc++}}}}catch(e){}
+                    if(this.configs.mediaType==='video'){try{var f2=document.getElementById('iframe');if(f2){var doc2=f2.contentDocument||f2.contentWindow?.document;if(doc2){var pbtn=doc2.querySelector('.vjs-big-play-button,.vjs-play-control');if(pbtn)pbtn.click()}}}catch(e){}}
+                    this._logPhase("播放","⏸️ 已暂停 "+pc+" 个媒体元素");
+                    this._isPlaying=false
+                }else{
+                    if(target){target.volume=1;target.muted=true;target.play()["catch"](function(){});this._logPhase("播放","▶️ "+type+"恢复 "+(target.playbackRate||1)+"x")}else{this._logPhase("播放-调试","▶️ 无"+type+"元素")}this._isPlaying=true;
+                    if(this.configs.mediaType==='video'){this._startVideoMonitoring()}
+                }
             },
 
             // ====== 屏幕防休眠 ======

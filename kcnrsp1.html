@@ -186,7 +186,7 @@ img{vertical-align: middle;}
 
 <script src="//mooc1.chaoxing.com/mooc-ans/js/jquery.color.js"></script>
 <script type="text/javascript" src="//mooc1.chaoxing.com/mooc-ans/static/js/domain.js"></script>
-<script type="text/javascript" src="https://fystat-ans.chaoxing.com/log/setlog?personid=531274872&courseId=227930633&classId=137573540&encode=a6670b6b890cef905c730a675c3bfcdf&chapterId=642258294"></script>
+<script type="text/javascript" src="https://fystat-ans.chaoxing.com/log/setlog?personid=531274872&courseId=259773210&classId=137828173&encode=a6670b6b890cef905c730a675c3bfcdf&chapterId=1095797268"></script>
 <link href="//mooc1.chaoxing.com/mooc-ans/css/work/viewer.min.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="//mooc1.chaoxing.com/mooc-ans/js/jquery.md5.js"></script>
 	<script type="text/javascript" src="//mooc1.chaoxing.com/mooc-ans/space/work/js/viewer-jquery.min.js?v=2025-1128-1511"></script>
@@ -198,20 +198,20 @@ var contentLimit20000 = '内容限20000字';
 window.cxktDomain = "";
 window.cxkdEditorUrl = "";
 window['dtype'] =  "Course";
-window['app'] =  "0";
+window['app'] =  "2";
 var ut_value = "s"
-var stu_clazzId = "137573540";
-var stu_CourseId = "227930633";
-var stu_knowledgeId = "642258294";
+var stu_clazzId = "137828173";
+var stu_CourseId = "259773210";
+var stu_knowledgeId = "1095797268";
 var stu_cpi = "531274872";
 var ua=navigator.userAgent.indexOf('chaoxing_wisdomclass');
 if(ua!=-1){
 	document.write('<script src="//mooc1.chaoxing.com/mooc-ans/js/phone/protocolChaoXing/CXJSBridge.js"><\/script>');
 	document.write('<script src="//mooc1.chaoxing.com/mooc-ans/js/phone/app.utils.js?v=2"><\/script>');
 }
-var utEnc="ddaac2ba1c382eda8120ffdf64701e33";
-var courseId=227930633;
-var courseid=227930633;
+var utEnc="c38fa09b9b938e06a46a307b6be11a9c";
+var courseId=259773210;
+var courseid=259773210;
 var courseEnded = '' === 'true';
 String.prototype.trim=function(){return this.replace(/(^\s*)|(\s*$)/g,"");}
 //设置cookie
@@ -296,13 +296,13 @@ function bindSubCheck(callback) {
 			type: "get", //以get方式与后台沟通
 			url : _HOST_CP2_ + "/mycourse/studentstudycourselist",
 			dataType:'html',//返回的值
-			data: {courseId:'227930633',chapterId:'642258294',clazzid:'137573540',cpi:'531274872'},
+			data: {courseId:'259773210',chapterId:'1095797268',clazzid:'137828173',cpi:'531274872'},
 			success: function(data){//如果调用成功
     		    document.getElementById("coursetree").innerHTML=data;
                 		jQuery(".ncells h4").removeClass();
         				jQuery(".ncells h5").removeClass();
 						jQuery(".ncells .flush").css('display','none');
-			            jQuery("#cur"+'642258294').parent().parent().find(".flush").css('display','block');
+			            jQuery("#cur"+'1095797268').parent().parent().find(".flush").css('display','block');
 			            var bulletFormat = "";
 						if( bulletFormat != "null" && bulletFormat == "Dot"){
 						  $(".hideChapterNumber").hide();
@@ -311,7 +311,7 @@ function bindSubCheck(callback) {
 						$(".knowledgeOpenBtn").removeClass("knowledgeOpenCurBtnImg");
 						jQuery(".ncells h4").removeClass();
         				jQuery(".ncells h5").removeClass();
-						jQuery("#cur"+'642258294').addClass("currents");
+						jQuery("#cur"+'1095797268').addClass("currents");
 						checkMobileBrowerLearn();
 			}
 		});
@@ -438,7 +438,7 @@ var addDiscussReply = function(discussId,replycount){
     	{
 			discussId : discussId
     		,replycount : replycount
-    		,clazzid : '137573540'
+    		,clazzid : '137828173'
     		,userId : '128849149'
     		,content : content
 			,role : 1
@@ -556,8 +556,8 @@ var praise = function(obj,disid,schoolid) {
     var chapterId = document.getElementById("chapterIdid").value;
 	jQuery.post(_HOST_CP2_ + "/bbsapi/addCDiscuss",
     	{
-		   moocId:'227930633',
-		   clazzid:'137573540',
+		   moocId:'259773210',
+		   clazzid:'137828173',
 		   userId:'128849149',
 		   title: title,
 		   content:content,
@@ -591,8 +591,8 @@ function getChapterRightDiscuss(){
 	//jQuery.post(_HOST_CP2_ + "/schoolCourseInfo/getChapterRightDiscuss",
 	jQuery.post(_HOST_CP2_ + "/schoolCourseInfo/getgrouptopic",
 	    {
-			courseId:'227930633'
-			,clazzid:'137573540'
+			courseId:'259773210'
+			,clazzid:'137828173'
 			,type: 2
 			,ut:'s'
 			,chapterId:chapterId
@@ -632,8 +632,8 @@ function getGroupChapterRightDiscuss(){
 	//jQuery.post(_HOST_CP2_ + "/schoolCourseInfo/getChapterRightDiscuss",
 	jQuery.post(_HOST_CP2_ + "/schoolCourseInfo/getgrouptopic",
     	{
-			courseId:'227930633'
-			,clazzid:'137573540'
+			courseId:'259773210'
+			,clazzid:'137828173'
 			,type: 2
 			,ut:'s'
    		},
@@ -1350,16 +1350,16 @@ function jobflagOperation(){
 <div class="bigImg"><img src=""></div>
 	<div class="imgBg"></div>
 <a name="gotop"></a>
-<input type="hidden" id="currentTime" value="1777743139538"/>
-<input type="hidden" id="uploadEnc" value="bf4687030bdb6ed9e044d5efe08f544e"/>
+<input type="hidden" id="currentTime" value="1777744550795"/>
+<input type="hidden" id="uploadEnc" value="2872847d9a2903db3dca06bacca1ac72"/>
 <input type="hidden" id="uploadUid" value="128849149"/>
 
 <input type="hidden" id="passSimulateValue" value="false"/>
-<input type="hidden" id="curCourseId" value="227930633"/>
+<input type="hidden" id="curCourseId" value="259773210"/>
 <input type="hidden" id="detectUrl" value="http://detect.chaoxing.com/api/passport2-onlineinfo.js?key=true&refer=http://i.mooc.chaoxing.com&fid=72452&_v="/>
-<input type="hidden" id="curChapterId" value="642258294"/>
+<input type="hidden" id="curChapterId" value="1095797268"/>
 <input type="hidden" id="curCpi" value="531274872"/>
-<input type="hidden" id="curClazzId" value="137573540"/>
+<input type="hidden" id="curClazzId" value="137828173"/>
 
 <input type="hidden" name="videoRandomCollectTime" id="videoRandomCollectTime" value=""/>
 <input type="hidden" name="videoJobId" id="videoJobId" value=""/>
@@ -1623,7 +1623,7 @@ var onReadComplete1 =function(){
 			type: "get", //以get方式与后台沟通
 			url : _HOST_CP2_ + "/mycourse/studentstudycourselist",
 			dataType:'html',//返回的值
-			data: {courseId:'227930633',chapterId:chapterId,clazzid:'137573540',cpi:'531274872'},
+			data: {courseId:'259773210',chapterId:chapterId,clazzid:'137828173',cpi:'531274872'},
 			success: function(data){//如果调用成功
     		    document.getElementById("coursetree").innerHTML=data;
 				jQuery(".ncells .flush").css('display','none');
@@ -1733,8 +1733,8 @@ function getClazzNote(){
         data : {
             userid:128849149,
             chapterId:chapterId,
-            courseId : 227930633,
-			clazzid: 137573540
+            courseId : 259773210,
+			clazzid: 137828173
         },
 		success: function(data){
             if(data != null){
@@ -1802,10 +1802,10 @@ function goback(){
    if(checkUnsave()){
       return;
    }
-    window.location.href = "/mooc-ans/mycourse/studentcourse?courseId=227930633&clazzid=137573540&enc=dea9def5c745747ed3a690931fdf6b14";
+    window.location.href = "/mooc-ans/mycourse/studentcourse?courseId=259773210&clazzid=137828173&enc=016b8fe5195691dfa0dad7f77319ddde";
 }
 var isblank=false;
-getTeacherAjax('227930633','137573540','642258294','531274872','');
+getTeacherAjax('259773210','137828173','1095797268','531274872','');
 var lsatNoteContent="";
 
     var addOrUpdateClazzNote = function(){
@@ -1871,10 +1871,10 @@ var lsatNoteContent="";
     			data: {
             			userid : '128849149',
             			content : content,
-    					courseName:'习近平新时代中国特色社会主义思想（特）',
+    					courseName:'中国共产党历史 1921-2021',
                         chapterId:chapterId,
-                        courseId : 227930633,
-						clazzid: 137573540,
+                        courseId : 259773210,
+						clazzid: 137828173,
 						notevideotime: noteVideoTime,
 						notevideoname: noteVideoName,
 						notevideojobid: noteVideoJobId,
@@ -2201,7 +2201,7 @@ $(document).ready(function(){
    var appDownloadUrl = "http://apps.chaoxing.com/d/app/4.html";
    var  durationHours = 24;
    function checkMobileBrowerLearn() {
-        var courseId =  '227930633';
+        var courseId =  '259773210';
 		if(courseId == 204396051 ||  courseId == 202418768){
 			return;
 		}
@@ -2218,7 +2218,7 @@ $(document).ready(function(){
 			if(durationHours + '_' + uf  == mobileBrowerLearn){
 			   return;
 			}
-    		var taskPoint = $('#cur642258294').find('.orange01').length;
+    		var taskPoint = $('#cur1095797268').find('.orange01').length;
 			var taskPoints = $(".catalog_points_yi").length;
     		if (taskPoint == 0 && taskPoints == 0) {
     			return;

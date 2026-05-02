@@ -536,30 +536,48 @@
 
             // ====== 查找音频元素 ======
             _getAudioEl() {
-                if (!this._audioEl) {
-                    const findFrame = () => {
-                        const selectors = ["iframe.ans-insertaudio","iframe[class*='audio']","iframe[name*='audio']","iframe[title*='audio']","div[id*='ans-insertaudio'] iframe","iframe[src*='audio']",".ans-insertaudio iframe"];
-                        for (const s of selectors) { const f = $(s); if (f.length > 0) return f.eq(0); }
-                        const all = $("iframe");
-                        for (let i = 0; i < all.length; i++) {
-                            const f = all.eq(i), src = f.attr('src')||'', cls = f.attr('class')||'', id = f.attr('id')||'';
-                            if (src.includes('video')||cls.includes('video')||id.includes('video')) continue;
-                            if (src.includes('audio')||cls.includes('audio')||id.includes('audio')||src.includes('insert')||cls.includes('ans')) return f;
-                        }
-                        for (let i = 0; i < all.length; i++) {
-                            try { const doc = all.eq(i).contents(); if (!doc||doc.length===0) continue; const n = doc.find("iframe"); for (let j=0;j<n.length;j++) { const f=$(n[j]), ns=f.attr('src')||'', nc=f.attr('class')||''; if (!ns.includes('video')&&!nc.includes('video')&&(ns.includes('audio')||nc.includes('audio')||ns.includes('insert'))) return f; } } catch(e){continue;}
-                        }
-                        return null;
-                    };
-                    const frameObj = findFrame();
-                    if (!frameObj || frameObj.length === 0) return null;
-                    let iframeDoc;
-                    try { iframeDoc = frameObj.contents ? frameObj.contents() : $(frameObj[0]).contents(); } catch(e) { return null; }
-                    if (!iframeDoc || iframeDoc.length === 0) return null;
-                    let audio = iframeDoc.find("audio").get(0);
-                    if (!audio) { const vc = iframeDoc.find(".video-js, #audio.video-js, .audio-player"); if (vc.length > 0) audio = vc.find("audio").get(0); }
-                    if (!audio) { const allM = iframeDoc.find("audio, video"); if (allM.length > 0) audio = allM.get(0); }
-                    if (audio) this._audioEl = audio;
+                if (this._audioEl) return this._audioEl;
+                const findFrame = () => {
+                    const selectors = ["iframe.ans-insertaudio","iframe[class*='audio']","iframe[name*='audio']","iframe[title*='audio']","div[id*='ans-insertaudio'] iframe","iframe[src*='audio']",".ans-insertaudio iframe"];
+                    for (const s of selectors) { const f = $(s); if (f.length > 0) return f.eq(0); }
+                    const all = $("iframe");
+                    for (let i = 0; i < all.length; i++) {
+                        const f = all.eq(i), src = f.attr('src')||'', cls = f.attr('class')||'', id = f.attr('id')||'';
+                        if (src.includes('video')||cls.includes('video')||id.includes('video')) continue;
+                        if (src.includes('audio')||cls.includes('audio')||id.includes('audio')||src.includes('insert')||cls.includes('ans')) return f;
+                    }
+                    for (let i = 0; i < all.length; i++) {
+                        try { const doc = all.eq(i).contents(); if (!doc||doc.length===0) continue; const n = doc.find("iframe"); for (let j=0;j<n.length;j++) { const f=$(n[j]), ns=f.attr('src')||'', nc=f.attr('class')||''; if (!ns.includes('video')&&!nc.includes('video')&&(ns.includes('audio')||nc.includes('audio')||ns.includes('insert'))) return f; } } catch(e){continue;}
+                    }
+                    return null;
+                };
+                const frameObj = findFrame();
+                if (!frameObj || frameObj.length === 0) return null;
+                let iframeDoc;
+                try { iframeDoc = frameObj.contents ? frameObj.contents() : $(frameObj[0]).contents(); } catch(e) { return null; }
+                if (!iframeDoc || iframeDoc.length === 0) return null;
+                // 优先查找实际播放的音频元素：Video.js创建的 audio_html5_api > 带 currentTime > 0 的 > #audio > audio1_html5_white > 第一个audio
+                const candidates = iframeDoc.find("audio#audio_html5_api, #audio_html5_api, audio#audio1_html5_white, audio");
+                let best = null, bestScore = -1;
+                for (let i = 0; i < candidates.length; i++) {
+                    const el = candidates[i];
+                    if (!el) continue;
+                    const ct = Number(el.currentTime || 0);
+                    const dur = Number(el.duration || 0);
+                    const ready = el.readyState || 0;
+                    const id = el.id || '';
+                    // 评分：有播放进度的 > readyState更高的 > 有ID的
+                    let score = 0;
+                    if (ct > 0) score += 100;
+                    if (dur > 0) score += 50;
+                    score += ready * 10;
+                    if (id === 'audio_html5_api') score += 500;
+                    if (id === 'audio' || id === 'audio1_html5_white') score += 20;
+                    if (score > bestScore) { bestScore = score; best = el; }
+                }
+                if (best) {
+                    this._audioEl = best;
+                    this._logPhase("音频-调试", `✅ 找到音频: id="${best.id}", currentTime=${(best.currentTime||0).toFixed(1)}s, duration=${(best.duration||0).toFixed(1)}s, readyState=${best.readyState}`);
                 }
                 return this._audioEl || null;
             },
@@ -1248,17 +1266,41 @@
 
                 // 执行暂停/恢复
                 if (this.configs.paused) {
-                    if (target) {
-                        target.pause();
-                        this._logPhase("播放", `⏸️ ${targetType}已暂停 (currentTime: ${target.currentTime?.toFixed(1)}s)`);
-                    } else {
-                        this._logPhase("播放-调试", `⏸️ 暂停: 无可用${targetType}元素`);
+                    // 暂停时：暂停所有能找到的 audio/video 元素（可能有多个）
+                    let pausedCount = 0;
+                    if (target) { target.pause(); target.volume = 0; pausedCount++; }
+                    // 额外兜底：暂停顶层页面 + #iframe内 的所有 audio 和 video
+                    const pauseAllMedia = (root) => {
+                        if (!root) return;
+                        const all = root.querySelectorAll('audio, video');
+                        for (const m of all) { if (!m.paused) { m.pause(); m.volume = 0; pausedCount++; } }
+                    };
+                    try { pauseAllMedia(document); } catch(e) {}
+                    try { const f = document.getElementById('iframe'); if (f && f.contentDocument) pauseAllMedia(f.contentDocument); } catch(e) {}
+                    // 视频：额外尝试点击播放按钮关闭播放（Video.js 可能自动恢复）
+                    if (this.configs.mediaType === 'video') {
+                        try {
+                            const f = document.getElementById('iframe');
+                            if (f) {
+                                const id = f.contentDocument || f.contentWindow?.document;
+                                if (id) {
+                                    const btn = id.querySelector('.vjs-big-play-button, .vjs-play-control');
+                                    if (btn) btn.click();
+                                }
+                            }
+                        } catch(e) {}
                     }
+                    this._logPhase("播放", `⏸️ 已暂停 ${pausedCount} 个媒体元素`);
+                    // 停止监控，防止任何自动恢复
+                    this._clearCheckInterval();
                     this._isPlaying = false;
                 } else {
                     if (target) {
+                        target.volume = 1;
                         target.muted = true;
                         target.play().catch(() => { target.muted = true; target.play().catch((e) => { this._logPhase("播放-错误", `${targetType}恢复失败: ${e.message}`); }); });
+                        // 重启监控
+                        if (this.configs.mediaType === 'video') { this._startVideoMonitoring(); }
                         this._logPhase("播放", `▶️ ${targetType}已恢复 (playbackRate: ${target.playbackRate}x)`);
                     } else {
                         this._logPhase("播放-调试", `▶️ 恢复: 无可用${targetType}元素`);

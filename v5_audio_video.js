@@ -244,10 +244,22 @@
                     const frameObj=findFrame(); if (!frameObj||frameObj.length===0) return null;
                     let iframeDoc; try { iframeDoc=frameObj.contents?frameObj.contents():$(frameObj[0]).contents(); } catch(e) { return null; }
                     if (!iframeDoc||iframeDoc.length===0) return null;
-                    let audio=iframeDoc.find("audio").get(0);
-                    if (!audio) { const vc=iframeDoc.find(".video-js,#audio.video-js,.audio-player"); if (vc.length>0) audio=vc.find("audio").get(0); }
-                    if (!audio) { const allM=iframeDoc.find("audio,video"); if (allM.length>0) audio=allM.get(0); }
-                    if (audio) this._audioEl=audio;
+                    // Score candidates to find the actual playing audio
+                    const candidates=iframeDoc.find("audio");
+                    if (candidates.length===0) return null;
+                    let best=null,bestScore=-1;
+                    candidates.each((i,el)=>{
+                        const $el=$(el); let score=0;
+                        if (el.currentTime>0) score+=100;
+                        if (el.duration>0) score+=50;
+                        score+=(el.readyState||0)*10;
+                        const id=$el.attr('id')||'';
+                        if (id==='audio_html5_api') score+=500;
+                        if (id==='audio'||id==='audio1_html5_white') score+=20;
+                        this._logPhase("_getAudioEl-候选",`id="${id}" score=${score} currentTime=${el.currentTime} readyState=${el.readyState}`);
+                        if (score>bestScore) { bestScore=score; best=el; }
+                    });
+                    if (best) { this._audioEl=best; this._logPhase("_getAudioEl",`✅ 选中 id="${$(best).attr('id')||'无id'}" score=${bestScore}`); }
                 }
                 return this._audioEl||null;
             },
@@ -574,11 +586,16 @@
                     target=this._audioEl;targetType='音频';
                 }
                 if(this.configs.paused){
-                    if(target){target.pause();this._logPhase("播放","⏸️ "+targetType+"暂停 (currentTime: "+(target.currentTime||0).toFixed(1)+"s)")}else{this._logPhase("播放-调试","⏸️ 无"+targetType+"元素")}
+                    var pc=0;if(target){target.pause();target.volume=0;pc++}else{this._logPhase("播放-调试","⏸️ 无"+targetType+"元素")}
+                    try{var all=document.querySelectorAll('audio,video');for(var i=0;i<all.length;i++){var m=all[i];if(!m.paused){m.pause();m.volume=0;pc++}}}catch(e){}
+                    try{var f=document.getElementById('iframe');if(f&&f.contentDocument){var all=f.contentDocument.querySelectorAll('audio,video');for(var i=0;i<all.length;i++){var m=all[i];if(!m.paused){m.pause();m.volume=0;pc++}}}}catch(e){}
+                    if(this.configs.mediaType==='video'){try{var f2=document.getElementById('iframe');if(f2){var doc2=f2.contentDocument||f2.contentWindow?.document;if(doc2){var pbtn=doc2.querySelector('.vjs-big-play-button,.vjs-play-control');if(pbtn)pbtn.click()}}}catch(e){}}
+                    this._logPhase("播放","⏸️ 已暂停 "+pc+" 个媒体元素");
                     this._isPlaying=false;
                 }else{
-                    if(target){target.muted=true;target.play()["catch"](function(){target.muted=true;target.play()["catch"](function(e){})});this._logPhase("播放","▶️ "+targetType+"恢复 (rate: "+target.playbackRate+"x)")}else{this._logPhase("播放-调试","▶️ 无"+targetType+"元素")}
+                    if(target){target.volume=1;target.muted=true;target.play()["catch"](function(){target.muted=true;target.play()["catch"](function(e){})});this._logPhase("播放","▶️ "+targetType+"恢复 (rate: "+target.playbackRate+"x)")}else{this._logPhase("播放-调试","▶️ 无"+targetType+"元素")}
                     this._isPlaying=true;
+                    if(this.configs.mediaType==='video'){this._startVideoMonitoring()}
                 }
             },
 
