@@ -1093,7 +1093,14 @@
                     return btn;
                 };
                 const nextBtn = findNextBtn();
-                if (nextBtn) { nextBtn.click(); this._logPhase("步骤", "点击 #prevNextFocusNext 跳过"); return true; }
+                if (nextBtn) {
+                    // 模式2：不点 #prevNextFocusNext，等待当前媒体加载
+                    if (this.configs.loopMode) {
+                        this._logPhase("步骤", "模式2：跳过 #prevNextFocusNext，等待媒体加载");
+                        return false;
+                    }
+                    nextBtn.click(); this._logPhase("步骤", "点击 #prevNextFocusNext 跳过"); return true;
+                }
                 return false;
             },
 
