@@ -295,7 +295,7 @@
 
             _tryResumePlayback:function(src){
                 if(this.configs.paused)return false;
-                if(this.configs.mediaType!=='video'&&this._audioEl){if(this._audioEl.ended){this._clearCheckInterval();setTimeout((function(){this.nextUnit()}).bind(this),500);return true}if(this._audioEl.paused&&!this._audioEl.ended&&this._audioEl.currentTime>0){this._audioEl.play()["catch"](function(){});return true}return false}
+                if(this.configs.mediaType!=='video'&&this._audioEl){if(this._audioEl.ended){this._clearCheckInterval();if(this.configs.loopMode){this._logPhase("音频-调试","模式2重新播放");this._audioEl.currentTime=0;this._audioEl.play()["catch"](function(){});this["_startAudioMonitoring"]();return true}setTimeout((function(){this.nextUnit()}).bind(this),500);return true}if(this._audioEl.paused&&!this._audioEl.ended&&this._audioEl.currentTime>0){this._audioEl.play()["catch"](function(){});return true}return false}
                 var v=this._videoEl;if(!v||!this._isPlaying)return false;if(v.ended)return false;
                 var n=Date.now();if(n-this._guardLastResumeTs<this.configs.guardResumeCooldownMs)return false;this._guardLastResumeTs=n;
                 v.play()["catch"](function(){v.muted=true;v.play()["catch"](function(){})});return true

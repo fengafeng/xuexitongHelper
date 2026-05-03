@@ -907,6 +907,14 @@
                 if (this.configs.mediaType !== 'video' && this._audioEl) {
                     if (this._audioEl.ended) {
                         this._clearCheckInterval();
+                        // 模式2：不跳转，重新播放当前音频
+                        if (this.configs.loopMode) {
+                            this._logPhase("音频-调试", "模式2：音频已结束，重新播放");
+                            this._audioEl.currentTime = 0;
+                            this._audioEl.play().catch(() => {});
+                            this._startAudioMonitoring();
+                            return true;
+                        }
                         setTimeout(() => this.nextUnit(), 500);
                         return true;
                     }
