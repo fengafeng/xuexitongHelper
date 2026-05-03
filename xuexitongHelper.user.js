@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         学习通助手
 // @namespace    https://github.com/fengafeng/xuexitongHelper
-// @version      1.0.0
+// @version      1.0.1
 // @description  自动完成学习通课程任务点：音视频自动播放、自动翻页、悬浮控制面板、整课循环
 // @author       suifeng
 // @match        *://*.chaoxing.com/*
@@ -1227,6 +1227,16 @@
                     if (done) {
                         this._logPhase("播放模式", "当前任务已完成，跳转下一节");
                         this._navigateToNextSection();
+                    } else {
+                        // 未完成：直接在当前播放
+                        this._logPhase("播放模式", "当前未完成，继续播放");
+                        if (this.configs.paused) {
+                            // 如果之前被暂停，恢复播放
+                            this.togglePause();
+                        } else {
+                            // 尝试恢复当前媒体
+                            this._tryResumePlayback("mode-switch");
+                        }
                     }
                 }
             },
