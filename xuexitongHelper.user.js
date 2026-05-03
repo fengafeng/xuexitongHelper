@@ -606,6 +606,11 @@
                     }
                     this._tryTimes = 0;
                     this._isPlaying = true;
+                    // 模式2：如果音频已结束（已完成章节），重置到开头再播放
+                    if (el.ended) {
+                        el.currentTime = 0;
+                        this._logPhase("音频-调试", "音频已结束，重置到开头");
+                    }
                     this._audioEventHandle();
                     el.playbackRate = this.configs.playbackRate;
                     if (this.configs.mutePageAudio) el.muted = true;
@@ -907,13 +912,9 @@
                 if (this.configs.mediaType !== 'video' && this._audioEl) {
                     if (this._audioEl.ended) {
                         this._clearCheckInterval();
-                        // 模式2：不跳转，重新播放当前音频
+                        // 模式2：不跳转，让 play() 中的 ended 重置和自然 ended 事件处理
                         if (this.configs.loopMode) {
-                            this._logPhase("音频-调试", "模式2：音频已结束，重新播放");
-                            this._audioEl.currentTime = 0;
-                            this._audioEl.play().catch(() => {});
-                            this._startAudioMonitoring();
-                            return true;
+                            return false;
                         }
                         setTimeout(() => this.nextUnit(), 500);
                         return true;

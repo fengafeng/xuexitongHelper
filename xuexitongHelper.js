@@ -273,7 +273,7 @@
                         if (this._advanceLearningStep()) { setTimeout(()=>this.play(),2000); return; }
                         if(this.configs.loopMode){this._logPhase("音频-调试","模式2:等待重试");setTimeout(()=>this.play(),2000);return}else{$("#prevNextFocusNext").click();} setTimeout(()=>this.play(),2000); return;
                     }
-                    this._tryTimes=0; this._isPlaying=true; this._audioEventHandle();
+                    this._tryTimes=0; this._isPlaying=true; if (el.ended) { el.currentTime=0; } this._audioEventHandle();
                     el.playbackRate=this.configs.playbackRate; if (this.configs.mutePageAudio) el.muted=true;
                     try { await el.play(); console.log(`%c✅ 音频 ${el.playbackRate}x`,"color:#4CAF50"); this._startAudioMonitoring(); }
                     catch(pe) { el.muted=true; try{await el.play();this._startAudioMonitoring();}catch(me){this._handlePlayError(pe);} }
@@ -404,7 +404,7 @@
             _tryResumePlayback(reason) {
                 if(this.configs.paused)return false;
                 if (this.configs.mediaType!=='video'&&this._audioEl) {
-                    if (this._audioEl.ended) { this._clearCheckInterval(); if (this.configs.loopMode) { this._logPhase("音频-调试","模式2重新播放"); this._audioEl.currentTime=0; this._audioEl.play().catch(()=>{}); this._startAudioMonitoring(); return true; } setTimeout(()=>this.nextUnit(),500); return true; }
+                    if (this._audioEl.ended) { this._clearCheckInterval(); if (this.configs.loopMode) { return false; } setTimeout(()=>this.nextUnit(),500); return true; }
                     if (this._audioEl.paused&&!this._audioEl.ended&&this._audioEl.currentTime>0) { this._audioEl.play().catch(()=>{}); return true; }
                     return false;
                 }
