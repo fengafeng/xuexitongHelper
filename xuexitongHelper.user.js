@@ -63,7 +63,7 @@
                 videoCheckInterval: 1000,
                 guardNoProgressMs: 7000,
                 guardResumeCooldownMs: 1500,
-                loopMode: false,         // true = 整课循环
+                loopMode: true,          // true = 模式2（全部播放，默认）
                 paused: false,            // true = 暂停播放
                 mediaType: 'unknown',     // 'audio' | 'video' | 'unknown'
             },
@@ -335,14 +335,14 @@
             /* ==================== 音频播放核心逻辑（V4） ==================== */
 
             _runContentPageAudio() {
-                this._logPhase("内容页-启动", "V5 音频播放模式");
+                this._logPhase("内容页-启动", `V5 音频播放模式 (loopMode=${this.configs.loopMode})`);
 
                 if (!this.configs.loopMode && this._detectTaskCompleted()) {
-                    this._logPhase("内容页-启动", "✅ 任务已完成，跳转下一节");
+                    this._logPhase("内容页-启动", `✅ 模式1+任务已完成，跳转下一节`);
                     this._navigateToNextSection();
                     return;
                 }
-                this._logPhase("内容页-启动", "⏳ 任务未完成，开始初始化");
+                this._logPhase("内容页-启动", `⏳ 开始初始化 (loopMode=${this.configs.loopMode})`);
 
                 const iframeCount = document.querySelectorAll('iframe').length;
                 console.log(`%c  页面 iframe 数量: ${iframeCount}`, "color:#607D8B");
@@ -654,14 +654,14 @@
             /* ==================== 视频播放核心逻辑（基于V3） ==================== */
 
             _runContentPageVideo() {
-                this._logPhase("内容页-启动", "V5 视频播放模式");
+                this._logPhase("内容页-启动", `视频播放模式 (loopMode=${this.configs.loopMode})`);
 
                 if (!this.configs.loopMode && this._detectTaskCompleted()) {
-                    this._logPhase("内容页-启动", "✅ 任务已完成，跳转下一节");
+                    this._logPhase("内容页-启动", `✅ 模式1+任务已完成，跳转下一节`);
                     this._navigateToNextSection();
                     return;
                 }
-                this._logPhase("内容页-启动", "⏳ 任务未完成，开始初始化");
+                this._logPhase("内容页-启动", `⏳ 开始初始化 (loopMode=${this.configs.loopMode})`);
 
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', () => {

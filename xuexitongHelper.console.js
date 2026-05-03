@@ -15,7 +15,7 @@
     var loadJQ=function(cb){if(typeof jQuery!=='undefined'){cb();return}var s=document.createElement('script');s.src='https://code.jquery.com/jquery-3.6.0.min.js';s.onload=cb;document.head.appendChild(s)};
     loadJQ(function(){
         window.app={
-            configs:{playbackRate:1,autoplay:true,mutePageAudio:true,retryInterval:2000,maxRetries:10,audioCheckInterval:1000,videoCheckInterval:1000,guardNoProgressMs:7000,guardResumeCooldownMs:1500,loopMode:false,paused:false,mediaType:'unknown'},
+            configs:{playbackRate:1,autoplay:true,mutePageAudio:true,retryInterval:2000,maxRetries:10,audioCheckInterval:1000,videoCheckInterval:1000,guardNoProgressMs:7000,guardResumeCooldownMs:1500,loopMode:true,paused:false,mediaType:'unknown'},
             _logBuffer:[],_logMax:100,
             _logPhase:function(n,d){var ts=new Date().toLocaleTimeString(),msg='['+ts+'] '+n+(d?': '+d:'');console.log('%c【'+n+'】'+(d?' '+d:''),'color:#FF9800;font-weight:bold;font-size:13px');this._logBuffer.push(msg);if(this._logBuffer.length>this._logMax)this._logBuffer.shift();this._updateDebugPanel()},
             _audioEls:[],_audioIndex:0,_videoEl:null,_treeContainerEl:null,_isPlaying:false,_pauseWatcher:null,_pausedAt:0,_nextSectionPending:false,_currentRetryCount:0,_checkInterval:null,_stepSwitchPending:false,_stepSwitchAt:0,_tryTimes:0,_skipCount:0,
