@@ -376,7 +376,7 @@
                     return btn;
                 };
                 var nextBtn=findNextBtn();
-                if(nextBtn){nextBtn.click();this._logPhase("步骤","点击#prevNextFocusNext跳过");return true}
+                if(nextBtn){if(this.configs.loopMode){this._logPhase("步骤","模式2:不点prevNextFocusNext");return false}nextBtn.click();this._logPhase("步骤","点击prevNextFocusNext");return true}
                 return false
             },
 

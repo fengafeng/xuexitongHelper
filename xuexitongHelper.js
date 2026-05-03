@@ -503,7 +503,7 @@
                 if (tab) { this._stepSwitchPending=true; this._stepSwitchAt=Date.now(); tab.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true,view:window})); return true; }
                 // 找不到页签时，尝试通过父页面的 #prevNextFocusNext 跳过
                 const findBtn=()=>{let b=document.getElementById('prevNextFocusNext');try{if(!b&&window.parent&&window.parent.document!==window.document)b=window.parent.document.getElementById('prevNextFocusNext')}catch(e){}try{if(!b&&window.top&&window.top.document!==window.document)b=window.top.document.getElementById('prevNextFocusNext')}catch(e){}return b};
-                const nb=findBtn(); if (nb) { nb.click(); this._logPhase("步骤","点击prevNextFocusNext跳过"); return true; }
+                const nb=findBtn(); if (nb) { if (this.configs.loopMode) { this._logPhase("步骤","模式2:不点prevNextFocusNext"); return false; } nb.click(); this._logPhase("步骤","点击prevNextFocusNext"); return true; }
                 return false;
             },
 
