@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         学习通助手
 // @namespace    https://github.com/fengafeng/xuexitongHelper
-// @version      1.0.1
+// @version      1.1.0
 // @description  自动完成学习通课程任务点：音视频自动播放、自动翻页、悬浮控制面板、整课循环
 // @author       suifeng
 // @match        *://*.chaoxing.com/*
@@ -1099,11 +1099,14 @@
                         if (m.type === 'childList') {
                             for (const n of m.addedNodes) {
                                 if (n.nodeType === Node.ELEMENT_NODE && n.querySelectorAll('[aria-label="任务点已完成"]').length > 0) {
-                                    this._navigateToNextSection(); return;
+                                    // 模式1（正常）才跳转；模式2（全部播放）忽略已完成标记
+                                    if (!this.configs.loopMode) this._navigateToNextSection();
+                                    return;
                                 }
                             }
                         } else if (m.type === 'attributes' && m.attributeName === 'aria-label' && m.target.getAttribute('aria-label') === '任务点已完成') {
-                            this._navigateToNextSection(); return;
+                            if (!this.configs.loopMode) this._navigateToNextSection();
+                            return;
                         }
                     }
                 });
@@ -1440,24 +1443,18 @@
                     #fq-control-panel .fq-close:hover { color: #fff; }
                     /* 模式切换区 */
                     #fq-control-panel .fq-mode-row {
-                        display: flex; align-items: center; justify-content: space-between;
+                        display: flex; align-items: center; gap: 6px;
                         background: rgba(255,255,255,0.05); border-radius: 8px;
                         padding: 8px 10px; margin-bottom: 10px;
                     }
-                    #fq-control-panel .fq-mode-label {
-                        font-size: 12px; color: #b0b0b0;
-                    }
-                    #fq-control-panel .fq-mode-toggle {
-                        font-size: 12px; padding: 4px 10px; border-radius: 8px;
+                    #fq-control-panel .fq-mode-btn {
+                        flex: 1; text-align: center; font-size: 12px; padding: 5px 8px; border-radius: 8px;
                         cursor: pointer; border: 1px solid rgba(255,255,255,0.12);
                         transition: all 0.15s; background: rgba(255,255,255,0.08); color: #ccc;
                     }
-                    #fq-control-panel .fq-mode-toggle:hover { background: rgba(255,255,255,0.18); color: #fff; }
-                    #fq-control-panel .fq-mode-active {
+                    #fq-control-panel .fq-mode-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+                    #fq-control-panel .fq-mode-btn.fq-mode-active {
                         background: #FF9800; color: #fff; border-color: #FF9800;
-                    }
-                    #fq-control-panel .fq-mode-normal {
-                        background: rgba(255,255,255,0.08); color: #ccc; border-color: rgba(255,255,255,0.12);
                     }
                     /* 暂停/播放按钮 */
                     #fq-control-panel .fq-pause-row {
@@ -1534,8 +1531,8 @@
                         <span class="fq-close">✕</span>
                     </div>
                     <div class="fq-mode-row">
-                        <span class="fq-mode-label" id="fq-mode-label">${modeStatus}</span>
-                        <span class="fq-mode-toggle ${modeClass}" id="fq-mode-toggle">${modeText}</span>
+                        <span class="fq-mode-btn ${this.configs.loopMode ? '' : 'fq-mode-active'}" id="fq-mode-1" data-mode="1">模式1 顺序</span>
+                        <span class="fq-mode-btn ${this.configs.loopMode ? 'fq-mode-active' : ''}" id="fq-mode-2" data-mode="2">模式2 全部</span>
                     </div>
                     <div class="fq-pause-row">
                         <span class="fq-pause-btn fq-playing" id="fq-pause-btn">⏸️ 暂停</span>
@@ -1584,10 +1581,39 @@
                     }
                 });
 
-                // 播放模式切换
-                panel.querySelector('#fq-mode-toggle').addEventListener('click', (e) => {
+                // 模式选择按钮
+                const setMode = (mode) => {
+                    this.configs.loopMode = (mode === 2);
+                    // 更新按钮高亮
+                    const m1 = document.getElementById('fq-mode-1');
+                    const m2 = document.getElementById('fq-mode-2');
+                    if (m1) m1.className = 'fq-mode-btn' + (mode === 1 ? ' fq-mode-active' : '');
+                    if (m2) m2.className = 'fq-mode-btn' + (mode === 2 ? ' fq-mode-active' : '');
+                    this._logPhase("播放模式", mode === 1 ? "模式1 顺序（已完成跳过）" : "模式2 全部（播完每一节）");
+
+                    if (mode === 1) {
+                        // 正常模式：检测当前是否有已完成标记，有则跳过
+                        let done = this._detectTaskCompleted();
+                        try { if (!done && window.parent && window.parent.document !== window.document) done = window.parent.document.querySelectorAll('[aria-label="任务点已完成"]').length > 0; } catch(e) {}
+                        try { if (!done && window.top && window.top.document !== window.document) done = window.top.document.querySelectorAll('[aria-label="任务点已完成"]').length > 0; } catch(e) {}
+                        if (done) {
+                            this._logPhase("播放模式", "当前任务已完成，跳转下一节");
+                            this._navigateToNextSection();
+                            return;
+                        }
+                    }
+                    // 未完成或模式2：确保正在播放
+                    if (this.configs.paused) { this.togglePause(); }
+                    else { this._tryResumePlayback("mode-switch"); }
+                };
+
+                panel.querySelector('#fq-mode-1').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    this.toggleLoopMode();
+                    setMode(1);
+                });
+                panel.querySelector('#fq-mode-2').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setMode(2);
                 });
 
                 // 暂停/播放按钮
