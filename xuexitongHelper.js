@@ -404,7 +404,7 @@
             _tryResumePlayback(reason) {
                 if(this.configs.paused)return false;
                 if (this.configs.mediaType!=='video'&&this._audioEl) {
-                    if (this._audioEl.ended) { this._clearCheckInterval(); setTimeout(()=>this.nextUnit(),500); return true; }
+                    if (this._audioEl.ended) { this._clearCheckInterval(); if (this.configs.loopMode) { this._logPhase("音频-调试","模式2重新播放"); this._audioEl.currentTime=0; this._audioEl.play().catch(()=>{}); this._startAudioMonitoring(); return true; } setTimeout(()=>this.nextUnit(),500); return true; }
                     if (this._audioEl.paused&&!this._audioEl.ended&&this._audioEl.currentTime>0) { this._audioEl.play().catch(()=>{}); return true; }
                     return false;
                 }
