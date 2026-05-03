@@ -42,7 +42,7 @@
                 videoCheckInterval: 1000,
                 guardNoProgressMs: 7000,
                 guardResumeCooldownMs: 1500,
-                loopMode: false,
+                loopMode: true,
                 paused: false,
                 mediaType: 'unknown',
             },
