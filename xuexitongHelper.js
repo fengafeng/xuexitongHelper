@@ -438,6 +438,15 @@
             },
 
             nextUnit() {
+                if (this.configs.loopMode) {
+                    this._logPhase("导航","模式2：#right1跳转");
+                    let btn=document.getElementById('right1');
+                    if(!btn){try{if(window.parent&&window.parent.document!==window.document)btn=window.parent.document.getElementById('right1')}catch(e){}}
+                    if(!btn){try{if(window.top&&window.top.document!==window.document)btn=window.top.document.getElementById('right1')}catch(e){}}
+                    if(btn){btn.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));this._resetState();setTimeout(function(){try{this._initCellData();this._playCurrent()}catch(e){}}.bind(this),3000)}
+                    this._clearCheckInterval();
+                    return;
+                }
                 const el=this._getTreeContainer();
                 if (!el) {
                     const btn=this._findRight1Btn();

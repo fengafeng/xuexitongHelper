@@ -330,6 +330,7 @@
             _findR1:function(){var b=document.getElementById('right1');try{if(!b&&window.parent&&window.parent.document!==window.document)b=window.parent.document.getElementById('right1')}catch(e){}try{if(!b&&window.top&&window.top.document!==window.document)b=window.top.document.getElementById('right1')}catch(e){}return b},
 
             nextUnit:function(){
+                if(this.configs.loopMode){this._logPhase("导航","模式2：#right1跳转");var btn=document.getElementById('right1');if(!btn){try{if(window.parent&&window.parent.document!==window.document)btn=window.parent.document.getElementById('right1')}catch(e){}}if(!btn){try{if(window.top&&window.top.document!==window.document)btn=window.top.document.getElementById('right1')}catch(e){}}if(btn){btn.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));this._resetState();setTimeout(function(){try{this._initCellData();this._playCurrent()}catch(e){}}.bind(this),3000)}this._clearCheckInterval();return}
                 var el=this._getTreeContainer();
                 if(!el){var btn=this._findR1();if(btn){btn.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));this._resetState();setTimeout(function(){try{this._initCellData();this._playCurrent()}catch(e){}}.bind(this),3000)}this._clearCheckInterval();return}
                 var cells=el.children("ul").children("li");
@@ -339,8 +340,8 @@
             },
 
             playCurrentIndex:function(nc){
-                if(!nc){var el=this._getTreeContainer();if(!el){if(this.configs.loopMode){this._playCurrent();return}var self=this;setTimeout(function(){self.nextUnit()},500);return}var cells=el.children("ul").children("li");if(!cells||!cells.length){if(this.configs.loopMode){this._playCurrent();return}var self=this;setTimeout(function(){self.nextUnit()},500);return}nc=$(cells.get(this._cellData.currentCellIndex)).find('.posCatalog_select:not(.firstLayer)').get(this._cellData.currentNCellIndex)}
-                var sn=$(nc).find(".posCatalog_name")[0];if(!sn){if(this.configs.loopMode){this._playCurrent();return}setTimeout(function(){this.nextUnit()}.bind(this),2000);return}
+                if(!nc){var el=this._getTreeContainer();if(!el){var self=this;setTimeout(function(){self.nextUnit()},500);return}var cells=el.children("ul").children("li");if(!cells||!cells.length){var self=this;setTimeout(function(){self.nextUnit()},500);return}nc=$(cells.get(this._cellData.currentCellIndex)).find('.posCatalog_select:not(.firstLayer)').get(this._cellData.currentNCellIndex)}
+                var sn=$(nc).find(".posCatalog_name")[0];if(!sn){setTimeout(function(){this.nextUnit()}.bind(this),2000);return}
                 $(sn).click();this._resetState();
                 setTimeout(function(){try{this._initCellData()}catch(e){}if(this.configs.autoplay)this._playCurrent()}.bind(this),3000)
             },

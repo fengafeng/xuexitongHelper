@@ -981,6 +981,21 @@
 
             // 下一章节/下一小节
             nextUnit() {
+                // 模式2：直接使用 #right1 按钮跳转，不依赖课程树
+                if (this.configs.loopMode) {
+                    this._logPhase("导航", "模式2：调 #right1 跳转下一节");
+                    let btn = document.getElementById('right1');
+                    if (!btn) { try { if (window.parent && window.parent.document !== window.document) btn = window.parent.document.getElementById('right1'); } catch(e){} }
+                    if (!btn) { try { if (window.top && window.top.document !== window.document) btn = window.top.document.getElementById('right1'); } catch(e){} }
+                    if (btn) {
+                        btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                        this._resetState();
+                        setTimeout(() => { try { this._initCellData(); this._playCurrent(); } catch(e) {} }, 3000);
+                    }
+                    this._clearCheckInterval();
+                    return;
+                }
+
                 const el = this._getTreeContainer();
                 if (!el) {
                     let btn = document.getElementById('right1');
@@ -1031,23 +1046,13 @@
             playCurrentIndex(nCell) {
                 if (!nCell) {
                     const el = this._getTreeContainer();
-                    if (!el) { 
-                        // 模式2：不依赖课程树，直接播放
-                        if (this.configs.loopMode) { this._playCurrent(); return; }
-                        setTimeout(() => this.nextUnit(), 500); return; 
-                    }
+                    if (!el) { setTimeout(() => this.nextUnit(), 500); return; }
                     const cells = el.children("ul").children("li");
-                    if (!cells || cells.length === 0) {
-                        if (this.configs.loopMode) { this._playCurrent(); return; }
-                        setTimeout(() => this.nextUnit(), 500); return; 
-                    }
+                    if (!cells || cells.length === 0) { setTimeout(() => this.nextUnit(), 500); return; }
                     nCell = $(cells.get(this._cellData.currentCellIndex)).find('.posCatalog_select:not(.firstLayer)').get(this._cellData.currentNCellIndex);
                 }
                 const $n = $(nCell), span = $n.find(".posCatalog_name")[0];
-                if (!span) {
-                    if (this.configs.loopMode) { this._playCurrent(); return; }
-                    setTimeout(() => this.nextUnit(), 2000); return; 
-                }
+                if (!span) { setTimeout(() => this.nextUnit(), 2000); return; }
                 $(span).click();
                 this._resetState();
                 setTimeout(() => {
