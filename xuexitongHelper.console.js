@@ -182,7 +182,7 @@
                 var self=this;
                 try{
                     var el=self._getAudioEl();
-                    if(el==null){if(self._advanceLearningStep()){setTimeout(function(){self.play()}.bind(self),2000);return}$("#prevNextFocusNext").click();setTimeout(function(){self.play()}.bind(self),2000);return}
+                    if(el==null){if(self._advanceLearningStep()){setTimeout(function(){self.play()}.bind(self),2000);return}if(this.configs.loopMode){this._logPhase("音频-调试","模式2:等待重试");setTimeout(()=>this.play(),2000);return}else{$("#prevNextFocusNext").click();}setTimeout(function(){self.play()}.bind(self),2000);return}
                     self._tryTimes=0;self._isPlaying=true;self._audioEventHandle();
                     el.playbackRate=self.configs.playbackRate;if(self.configs.mutePageAudio)el.muted=true;
                     try{await el.play();console.log('%c✅ 音频','color:#4CAF50');self._startAudioMonitoring()}

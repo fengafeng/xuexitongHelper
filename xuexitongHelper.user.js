@@ -594,6 +594,12 @@
                             setTimeout(() => this.play(), 2000);
                             return;
                         }
+                        // 模式2（全部播放）：不跳转，继续等待音频加载
+                        if (this.configs.loopMode) {
+                            this._logPhase("音频-调试", "模式2：音频未就绪，等待重试");
+                            setTimeout(() => this.play(), 2000);
+                            return;
+                        }
                         $("#prevNextFocusNext").click();
                         setTimeout(() => this.play(), 2000);
                         return;

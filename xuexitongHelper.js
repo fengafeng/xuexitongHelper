@@ -271,7 +271,7 @@
                     const el=this._getAudioEl();
                     if (el==null) {
                         if (this._advanceLearningStep()) { setTimeout(()=>this.play(),2000); return; }
-                        $("#prevNextFocusNext").click(); setTimeout(()=>this.play(),2000); return;
+                        if(this.configs.loopMode){this._logPhase("音频-调试","模式2:等待重试");setTimeout(()=>this.play(),2000);return}else{$("#prevNextFocusNext").click();} setTimeout(()=>this.play(),2000); return;
                     }
                     this._tryTimes=0; this._isPlaying=true; this._audioEventHandle();
                     el.playbackRate=this.configs.playbackRate; if (this.configs.mutePageAudio) el.muted=true;
