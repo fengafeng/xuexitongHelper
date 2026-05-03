@@ -1031,13 +1031,23 @@
             playCurrentIndex(nCell) {
                 if (!nCell) {
                     const el = this._getTreeContainer();
-                    if (!el) { setTimeout(() => this.nextUnit(), 500); return; }
+                    if (!el) { 
+                        // 模式2：不依赖课程树，直接播放
+                        if (this.configs.loopMode) { this._playCurrent(); return; }
+                        setTimeout(() => this.nextUnit(), 500); return; 
+                    }
                     const cells = el.children("ul").children("li");
-                    if (!cells || cells.length === 0) { setTimeout(() => this.nextUnit(), 500); return; }
+                    if (!cells || cells.length === 0) {
+                        if (this.configs.loopMode) { this._playCurrent(); return; }
+                        setTimeout(() => this.nextUnit(), 500); return; 
+                    }
                     nCell = $(cells.get(this._cellData.currentCellIndex)).find('.posCatalog_select:not(.firstLayer)').get(this._cellData.currentNCellIndex);
                 }
                 const $n = $(nCell), span = $n.find(".posCatalog_name")[0];
-                if (!span) { setTimeout(() => this.nextUnit(), 2000); return; }
+                if (!span) {
+                    if (this.configs.loopMode) { this._playCurrent(); return; }
+                    setTimeout(() => this.nextUnit(), 2000); return; 
+                }
                 $(span).click();
                 this._resetState();
                 setTimeout(() => {
